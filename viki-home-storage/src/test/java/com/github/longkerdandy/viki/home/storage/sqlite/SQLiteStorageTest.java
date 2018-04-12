@@ -1,4 +1,4 @@
-package com.github.longkerdandy.viki.home.storage;
+package com.github.longkerdandy.viki.home.storage.sqlite;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,16 +9,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.Test;
 
-public class StorageFactoryTest {
+public class SQLiteStorageTest {
 
   @Test
   public void sampleDatabaseTest() throws IOException {
-    File tmp = File.createTempFile("viki_home_", "db");
-    String path = tmp.getAbsolutePath();
-    Map<String, Object> map = Map.of("storage.jdbc.url", "jdbc:sqlite:" + path);
-    MapConfiguration config = new MapConfiguration(map);
-    StorageFactory factory = new StorageFactory(config);
-    Jdbi jdbi = factory.getJdbi();
+    String path = File.createTempFile("viki_home_", "db").getAbsolutePath();
+    SQLiteStorage storage = new SQLiteStorage(new MapConfiguration(
+        Map.of("storage.jdbc.url", "jdbc:sqlite:" + path,
+            "storage.sqlite.pragma.foreign_keys", "true")));
+    Jdbi jdbi = storage.getJdbi();
 
     jdbi.useHandle(handle -> {
       handle.execute("DROP TABLE IF EXISTS Genre");
@@ -55,8 +54,8 @@ public class StorageFactoryTest {
         "storage.sqlite.pragma.encoding", "UTF-8",
         "storage.sqlite.pragma.secure_delete", "true");
     MapConfiguration config = new MapConfiguration(map);
-    StorageFactory factory = new StorageFactory(config);
-    Properties prop = factory.parseSQLitePragma(config);
+    SQLiteStorage storage = new SQLiteStorage(config);
+    Properties prop = storage.parseSQLitePragma(config);
     assert prop.size() == 2;
     assert prop.getProperty("encoding").equals("UTF-8");
     assert prop.getProperty("secure_delete").equals("true");

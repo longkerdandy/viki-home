@@ -1,14 +1,15 @@
 module com.github.longkerdandy.viki.home.storage {
+  // export
+  exports com.github.longkerdandy.viki.home.storage.sqlite;
+
   // project api
   requires com.github.longkerdandy.viki.home.api;
 
-  // jdbc
-  requires java.sql;
+  // database
   requires sqlite.jdbc;     // TODO: Automatic Module Name
-  requires jdbi3.core;      // TODO: Automatic Module Name
   requires jdbi3.sqlite;    // TODO: Automatic Module Name
 
-  // dependencies
-  requires org.apache.commons.lang3;
-  requires org.apache.commons.configuration2;
+  // services
+  provides com.github.longkerdandy.viki.home.storage.StorageFactory
+      with com.github.longkerdandy.viki.home.storage.sqlite.SQLiteStorageFactory;
 }

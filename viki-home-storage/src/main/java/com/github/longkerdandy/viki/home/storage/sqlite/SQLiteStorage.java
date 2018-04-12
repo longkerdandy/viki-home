@@ -1,6 +1,8 @@
-package com.github.longkerdandy.viki.home.storage;
+package com.github.longkerdandy.viki.home.storage.sqlite;
 
+import com.github.longkerdandy.viki.home.storage.Storage;
 import java.util.Properties;
+import javax.sql.DataSource;
 import org.apache.commons.configuration2.AbstractConfiguration;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlite3.SQLitePlugin;
@@ -8,10 +10,12 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 
 /**
- * Storage Factory
+ * SQLite Storage
  */
-public class StorageFactory {
+public class SQLiteStorage implements Storage {
 
+  // data source
+  private SQLiteDataSource ds;
   // Jdbi Instance
   private Jdbi jdbi;
 
@@ -20,20 +24,31 @@ public class StorageFactory {
    *
    * @param config Storage Configuration
    */
-  public StorageFactory(AbstractConfiguration config) {
+  public SQLiteStorage(AbstractConfiguration config) {
     SQLiteConfig sc = new SQLiteConfig(parseSQLitePragma(config));
-    SQLiteDataSource ds = new SQLiteDataSource(sc);
-    ds.setUrl(config.getString("storage.jdbc.url"));
+    this.ds = new SQLiteDataSource(sc);
+    this.ds.setUrl(config.getString("storage.jdbc.url"));
     this.jdbi = Jdbi.create(ds).installPlugin(new SQLitePlugin());
   }
 
   /**
-   * Get Jdbi instance
+   * Get the DataSourceinstance
+   *
+   * @return DataSource Instance
+   */
+  @Override
+  public DataSource getDataSource() {
+    return this.ds;
+  }
+
+  /**
+   * Get the Jdbi instance
    * Jdbi instances are thread-safe and do not own any database resources.
    * Typically applications create a single, shared Jdbi instance, and set up any common configuration there.
    *
    * @return Jdbi Instance
    */
+  @Override
   public Jdbi getJdbi() {
     return this.jdbi;
   }
