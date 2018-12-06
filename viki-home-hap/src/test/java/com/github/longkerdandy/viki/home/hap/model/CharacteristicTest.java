@@ -45,7 +45,7 @@ public class CharacteristicTest {
     assert json.contains("type") && json
         .contains("79fce53f-22c8-489b-9b3d-b17f909957f6".toUpperCase());
     assert json.contains("iid");
-    assert json.contains("value") && json.contains("null");
+    assert !json.contains("value") && !json.contains("null");
     assert json.contains("perms") && json.contains("pw");
     assert json.contains("format") && json.contains("int");
     assert !json.contains("valid-values");

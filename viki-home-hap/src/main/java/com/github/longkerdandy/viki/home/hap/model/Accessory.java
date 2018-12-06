@@ -4,25 +4,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * HAP Accessory Object
+ * HomeKit Accessory Protocol Accessory Object
  */
 public class Accessory {
 
-  @JsonProperty("iid")
+  @JsonProperty("aid")
   private Long instanceId;
   private List<Service> services;
 
   private Accessory() {
   }
 
-  private Accessory(Long instanceId, List<Service> services) {
+  public Accessory(Long instanceId, List<Service> services) {
+    // validation
+    if (instanceId == null) {
+      throw new IllegalArgumentException("Accessory's InstanceId is required");
+    }
+
     this.instanceId = instanceId;
     this.services = services;
-
-    // validation
-    if (this.instanceId == null || this.services == null || this.services.isEmpty()) {
-      throw new IllegalArgumentException("Accessory's InstanceId Services are required");
-    }
   }
 
   public Long getInstanceId() {
@@ -39,5 +39,13 @@ public class Accessory {
 
   public void setServices(List<Service> services) {
     this.services = services;
+  }
+
+  @Override
+  public String toString() {
+    return "Accessory{" +
+        "instanceId=" + instanceId +
+        ", services=" + services +
+        '}';
   }
 }

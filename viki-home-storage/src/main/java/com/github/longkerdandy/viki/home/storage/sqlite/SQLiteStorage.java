@@ -15,9 +15,9 @@ import org.sqlite.SQLiteDataSource;
 public class SQLiteStorage implements Storage {
 
   // data source
-  private SQLiteDataSource ds;
+  private final SQLiteDataSource ds;
   // Jdbi Instance
-  private Jdbi jdbi;
+  private final Jdbi jdbi;
 
   /**
    * Constructor
@@ -32,7 +32,7 @@ public class SQLiteStorage implements Storage {
   }
 
   /**
-   * Get the DataSourceinstance
+   * Get the DataSource instance.
    *
    * @return DataSource Instance
    */
@@ -42,9 +42,9 @@ public class SQLiteStorage implements Storage {
   }
 
   /**
-   * Get the Jdbi instance
-   * Jdbi instances are thread-safe and do not own any database resources.
-   * Typically applications create a single, shared Jdbi instance, and set up any common configuration there.
+   * Get the Jdbi instance. Jdbi instances are thread-safe and do not own any database resources.
+   * Typically applications create a single, shared Jdbi instance, and set up any common
+   * configuration there.
    *
    * @return Jdbi Instance
    */
@@ -54,11 +54,11 @@ public class SQLiteStorage implements Storage {
   }
 
   /**
-   * Parse and return SQLite configuration options
-   * See http://www.sqlite.org/pragma.html for more information
+   * Parse and return SQLite configuration options.
    *
    * @param config Configuration
    * @return SQLite Configuration
+   * @see <a href="http://www.sqlite.org/pragma.html">http://www.sqlite.org/pragma.html</a>
    */
   protected Properties parseSQLitePragma(AbstractConfiguration config) {
     final String prefix = "storage.sqlite.pragma";

@@ -10,7 +10,7 @@ public enum Unit {
   CELSIUS("celsius"),
   PERCENTAGE("percentage"),
   ARCDEGREES("arcdegrees"),
-  lux("lux"),
+  LUX("lux"),
   SECONDS("seconds");
 
   private final String value;

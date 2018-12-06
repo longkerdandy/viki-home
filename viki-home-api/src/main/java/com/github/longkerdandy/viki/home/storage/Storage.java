@@ -9,16 +9,16 @@ import org.jdbi.v3.core.Jdbi;
 public interface Storage {
 
   /**
-   * Get the Jdbi instance
-   *
-   * @return Jdbi
-   */
-  Jdbi getJdbi();
-
-  /**
    * Get the DataSource instance
    *
    * @return DataSource
    */
   DataSource getDataSource();
+
+  /**
+   * Get the Jdbi instance
+   *
+   * @return Jdbi
+   */
+  Jdbi getJdbi();
 }

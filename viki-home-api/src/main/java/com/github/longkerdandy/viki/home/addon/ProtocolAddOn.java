@@ -15,10 +15,10 @@ public interface ProtocolAddOn {
   /**
    * Initialize
    */
-  void init();
+  void init() throws Exception;
 
   /**
    * Destroy
    */
-  void destroy();
+  void destroy() throws Exception;
 }

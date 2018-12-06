@@ -1,5 +1,7 @@
 package com.github.longkerdandy.viki.home.hap.model;
 
+import static com.github.longkerdandy.viki.home.hap.model.property.Permission.PAIRED_READ;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +14,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * HAP Characteristic Object
+ * HomeKit Accessory Protocol Characteristic Object
  *
  * @param <T> Value type according to the Format
  */
@@ -21,7 +23,8 @@ public class Characteristic<T> {
   private UUID type;
   @JsonProperty("iid")
   private Long instanceId;
-  @JsonInclude(Include.ALWAYS)
+  // Fact: null value must be excluded
+  // @JsonInclude()
   private T value;
   @JsonProperty("perms")
   private List<Permission> permissions;
@@ -111,8 +114,7 @@ public class Characteristic<T> {
     return permissions;
   }
 
-  public void setPermissions(
-      List<Permission> permissions) {
+  public void setPermissions(List<Permission> permissions) {
     this.permissions = permissions;
   }
 
@@ -202,6 +204,27 @@ public class Characteristic<T> {
 
   public void setValidValuesRange(List<T> validValuesRange) {
     this.validValuesRange = validValuesRange;
+  }
+
+  @Override
+  public String toString() {
+    return "Characteristic{" +
+        "type=" + type +
+        ", instanceId=" + instanceId +
+        ", value=" + value +
+        ", permissions=" + permissions +
+        ", enableEvent=" + enableEvent +
+        ", description='" + description + '\'' +
+        ", format=" + format +
+        ", unit=" + unit +
+        ", minValue=" + minValue +
+        ", maxValue=" + maxValue +
+        ", minStep=" + minStep +
+        ", maxLength=" + maxLength +
+        ", maxDataLength=" + maxDataLength +
+        ", validValues=" + validValues +
+        ", validValuesRange=" + validValuesRange +
+        '}';
   }
 
   public static class Builder<T> {
@@ -312,11 +335,11 @@ public class Characteristic<T> {
       }
       if (this.type == null || this.instanceId == null || this.permissions == null
           || this.permissions.isEmpty() || this.format == null
-          || (this.permissions.contains(Permission.PAIRED_READ) && this.value == null)) {
+          || (this.permissions.contains(PAIRED_READ) && this.value == null)) {
         throw new IllegalArgumentException(
             "Characteristic's Type InstanceId Value Permissions Format are required");
       }
-      if (!this.permissions.contains(Permission.PAIRED_READ) && this.value != null) {
+      if (!this.permissions.contains(PAIRED_READ) && this.value != null) {
         throw new IllegalArgumentException(
             "Characteristic's Value should be null when Permissions don't contain paired read");
       }

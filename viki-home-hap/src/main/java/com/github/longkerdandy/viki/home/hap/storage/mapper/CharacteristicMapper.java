@@ -1,5 +1,14 @@
 package com.github.longkerdandy.viki.home.hap.storage.mapper;
 
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toArray;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toBoolean;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toDouble;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toDoubleList;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toInteger;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toIntegerList;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toLong;
+import static com.github.longkerdandy.viki.home.hap.util.Mappers.toLongList;
+
 import com.github.longkerdandy.viki.home.hap.model.Characteristic;
 import com.github.longkerdandy.viki.home.hap.model.Characteristic.Builder;
 import com.github.longkerdandy.viki.home.hap.model.property.Format;
@@ -14,12 +23,15 @@ import java.util.stream.Collectors;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+/**
+ * Mapper for {@link Characteristic}
+ */
 public class CharacteristicMapper implements RowMapper<Characteristic> {
 
   @Override
   public Characteristic map(ResultSet rs, StatementContext ctx) throws SQLException {
-    String type = ResultSets.getString(rs, "type");
     Long instanceId = ResultSets.getLong(rs, "cid");
+    String type = ResultSets.getString(rs, "type");
     String value = ResultSets.getString(rs, "_value");
     List<Permission> permissions = toPermissions(ResultSets.getString(rs, "permissions"));
     Boolean enableEvent = toBoolean(ResultSets.getInt(rs, "enable_event"));
@@ -27,7 +39,7 @@ public class CharacteristicMapper implements RowMapper<Characteristic> {
     Format format = toFormat(ResultSets.getString(rs, "format"));
     Unit unit = toUnit(ResultSets.getString(rs, "unit"));
 
-    Builder builder = null;
+    Builder builder;
     if (format == Format.BOOL) {
       builder = new Builder<>(type, instanceId, toBoolean(value), permissions, format);
     } else if (format == Format.UINT8 || format == Format.UINT16 || format == Format.INT) {
@@ -69,54 +81,6 @@ public class CharacteristicMapper implements RowMapper<Characteristic> {
         .build();
   }
 
-  protected Boolean toBoolean(Integer value) {
-    if (value != null) {
-      return value != 0;
-    } else {
-      return null;
-    }
-  }
-
-  protected Boolean toBoolean(String value) {
-    if (value != null) {
-      return Boolean.parseBoolean(value);
-    } else {
-      return null;
-    }
-  }
-
-  protected Integer toInteger(String value) {
-    if (value != null) {
-      return Integer.parseInt(value);
-    } else {
-      return null;
-    }
-  }
-
-  protected Long toLong(String value) {
-    if (value != null) {
-      return Long.parseLong(value);
-    } else {
-      return null;
-    }
-  }
-
-  protected Double toDouble(String value) {
-    if (value != null) {
-      return Double.parseDouble(value);
-    } else {
-      return null;
-    }
-  }
-
-  protected String[] toArray(String value) {
-    if (value != null) {
-      return value.split(",");
-    } else {
-      return null;
-    }
-  }
-
   protected List<Permission> toPermissions(String value) {
     if (value != null) {
       return Arrays.stream(toArray(value)).map(Permission::fromValue).collect(Collectors.toList());
@@ -136,30 +100,6 @@ public class CharacteristicMapper implements RowMapper<Characteristic> {
   protected Unit toUnit(String value) {
     if (value != null) {
       return Unit.fromValue(value);
-    } else {
-      return null;
-    }
-  }
-
-  protected List<Integer> toIntegerList(String value) {
-    if (value != null) {
-      return Arrays.stream(toArray(value)).map(Integer::parseInt).collect(Collectors.toList());
-    } else {
-      return null;
-    }
-  }
-
-  protected List<Long> toLongList(String value) {
-    if (value != null) {
-      return Arrays.stream(toArray(value)).map(Long::parseLong).collect(Collectors.toList());
-    } else {
-      return null;
-    }
-  }
-
-  protected List<Double> toDoubleList(String value) {
-    if (value != null) {
-      return Arrays.stream(toArray(value)).map(Double::parseDouble).collect(Collectors.toList());
     } else {
       return null;
     }

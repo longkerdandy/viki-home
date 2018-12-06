@@ -7,7 +7,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * HAP Service Object
+ * HomeKit Accessory Protocol Service Object
  */
 public class Service {
 
@@ -72,8 +72,7 @@ public class Service {
     return characteristics;
   }
 
-  public void setCharacteristics(
-      List<Characteristic> characteristics) {
+  public void setCharacteristics(List<Characteristic> characteristics) {
     this.characteristics = characteristics;
   }
 
@@ -101,6 +100,18 @@ public class Service {
     this.linkedServiceIds = linkedServiceIds;
   }
 
+  @Override
+  public String toString() {
+    return "Service{" +
+        "type=" + type +
+        ", instanceId=" + instanceId +
+        ", characteristics=" + characteristics +
+        ", isHidden=" + isHidden +
+        ", isPrimary=" + isPrimary +
+        ", linkedServiceIds=" + linkedServiceIds +
+        '}';
+  }
+
   public static class Builder {
 
     private UUID type;
@@ -109,6 +120,12 @@ public class Service {
     private Boolean isHidden;
     private Boolean isPrimary;
     private List<Long> linkedServiceIds;
+
+    public Builder(String type, Long instanceId, List<Characteristic> characteristics) {
+      this.type = UUID.fromString(type);
+      this.instanceId = instanceId;
+      this.characteristics = characteristics;
+    }
 
     public Builder(UUID type, Long instanceId, List<Characteristic> characteristics) {
       this.type = type;
@@ -121,7 +138,7 @@ public class Service {
       return this;
     }
 
-    public Builder isPrimary(Boolean isHidden) {
+    public Builder isPrimary(Boolean isPrimary) {
       this.isPrimary = isPrimary;
       return this;
     }
@@ -133,10 +150,8 @@ public class Service {
 
     public Service build() {
       // validation
-      if (this.type == null || this.instanceId == null
-          || this.characteristics == null || this.characteristics.isEmpty()) {
-        throw new IllegalArgumentException(
-            "Service's Type InstanceId Characteristics are required");
+      if (this.type == null || this.instanceId == null) {
+        throw new IllegalArgumentException("Service's Type, InstanceId  are required");
       }
 
       return new Service(this);

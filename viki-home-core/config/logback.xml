@@ -20,8 +20,20 @@
     </encoder>
   </appender>
 
-  <!-- Commons Config -->
-  <logger additivity="false" level="INFO" name="org.apache.commons.configuration">
+  <!-- FlywayDB -->
+  <logger additivity="false" level="INFO" name="org.flywaydb">
+    <appender-ref ref="Console"/>
+    <appender-ref ref="File"/>
+  </logger>
+
+  <!-- JmDNS -->
+  <logger additivity="false" level="INFO" name="javax.jmdns">
+    <appender-ref ref="Console"/>
+    <appender-ref ref="File"/>
+  </logger>
+
+  <!-- Netty -->
+  <logger additivity="false" level="DEBUG" name="io.netty">
     <appender-ref ref="Console"/>
     <appender-ref ref="File"/>
   </logger>

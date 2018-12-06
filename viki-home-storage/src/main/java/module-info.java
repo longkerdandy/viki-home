@@ -1,5 +1,5 @@
 module com.github.longkerdandy.viki.home.storage {
-  // export
+  // exports
   exports com.github.longkerdandy.viki.home.storage.sqlite;
 
   // project api

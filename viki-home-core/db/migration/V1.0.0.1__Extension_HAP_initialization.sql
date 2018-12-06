@@ -8,11 +8,22 @@ CREATE TABLE ext_hap_bridge(
   state_num INTEGER NOT NULL,
   protocol_version TEXT NOT NULL,
   status_flag INTEGER NOT NULL,
-  category_id INTEGER NOT NULL
+  category_id INTEGER NOT NULL,
+  private_key BLOB,
+  public_key BLOB
 );
 -- Bridge
 INSERT INTO ext_hap_bridge (aid, aid_counter, config_num, protocol_version, state_num, status_flag, category_id)
 VALUES (1, 1, 1, '1.0', 1, 1, 2);
+
+/** Pairing **/
+CREATE TABLE ext_hap_pairing(
+  pairing_id TEXT NOT NULL PRIMARY KEY ASC,
+  public_key BLOB NOT NULL,
+  permissions INTEGER NOT NULL
+);
+CREATE INDEX idx_ext_hap_pairing_permissions
+ON ext_hap_pairing (permissions);
 
 /** Accessory **/
 CREATE TABLE ext_hap_accessory(
@@ -61,6 +72,8 @@ CREATE TABLE ext_hap_characteristic(
   PRIMARY KEY(aid, cid),
   FOREIGN KEY(aid, sid) REFERENCES ext_hap_service(aid, sid)
 );
+CREATE INDEX idx_ext_hap_characteristic_service
+ON ext_hap_characteristic (aid, sid);
 CREATE UNIQUE INDEX idx_ext_hap_characteristic_type
 ON ext_hap_characteristic (aid, type);
 -- Identify

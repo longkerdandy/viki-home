@@ -67,7 +67,7 @@ public class Ids {
     for (int i = 7; i >= 0; i--) {
       final Long module = now % 64;
       result[i] = ID_CHARS.charAt(module.intValue());
-      now = (long) Math.floor(now / 64);
+      now = (long) Math.floor(now / 64f);
     }
     if (now != 0) {
       throw new AssertionError("We should have converted the entire timestamp.");

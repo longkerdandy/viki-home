@@ -1,38 +1,74 @@
 package com.github.longkerdandy.viki.home.hap;
 
 import com.github.longkerdandy.viki.home.addon.ProtocolAddOn;
-import com.github.longkerdandy.viki.home.hap.model.Characteristic;
+import com.github.longkerdandy.viki.home.hap.http.HAPChannelInboundHandler;
+import com.github.longkerdandy.viki.home.hap.mdns.HAPmDNSAdvertiser;
 import com.github.longkerdandy.viki.home.hap.storage.HAPStorage;
+import com.github.longkerdandy.viki.home.hap.storage.Registry;
 import com.github.longkerdandy.viki.home.storage.Storage;
 import com.github.longkerdandy.viki.home.util.Networks;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceInfo;
+import java.net.InetAddress;
 import org.apache.commons.configuration2.AbstractConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HomeKit Accessory Protocol Add-on
  */
 public class HomeKitProtocolAddOn implements ProtocolAddOn {
 
-  // port
+  private static final Logger logger = LoggerFactory.getLogger(HomeKitProtocolAddOn.class);
+
+  // local address
+  private final InetAddress address;
+  // host name
+  private final String hostname;
+  // mac address
+  private final String macAddress;
+  // http server port
   private final int port;
+  // pin code
+  private final String pinCode;
   // storage
   private final HAPStorage hapStorage;
+  // session registry
+  private final Registry registry;
   // mDNS
-  private final JmDNS jmDNS;
+  private HAPmDNSAdvertiser advertiser;
+  // netty
+  private EventLoopGroup bossGroup;
+  private EventLoopGroup workerGroup;
+
 
   /**
    * Constructor
+   *
+   * @param config {@link AbstractConfiguration}
+   * @param storage {@link Storage}
    */
   public HomeKitProtocolAddOn(AbstractConfiguration config, Storage storage) {
-    this.port = config.getInt("hap.discover.port");
-    this.hapStorage = new HAPStorage(storage.getJdbi());
     try {
-      // this.jmDNS = JmDNS.create(Networks.getLocalInetAddress());
-      this.jmDNS = JmDNS.create(Networks.getLocalInetAddress(), Networks.getLocalHostname());
+      this.address = Networks.getLocalInetAddress();
+      this.hostname = Networks.getLocalHostname(this.address);
+      this.macAddress = Networks.getLocalMacAddress(this.address);
+      // this.macAddress = "2a:7a:bb:15:3e:25".toUpperCase();
+      this.port = config.getInt("hap.port");
+      this.pinCode = config.getString("hap.pin");
+      this.hapStorage = new HAPStorage(storage.getJdbi());
+      this.registry = new Registry();
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -40,81 +76,78 @@ public class HomeKitProtocolAddOn implements ProtocolAddOn {
 
   @Override
   public String getAddOnName() {
-    return "HomeKit Protocol Add-on";
+    return "HomeKit Accessory Protocol Add-on";
   }
 
   @Override
-  public void init() {
+  public void init() throws IOException, InterruptedException {
+    logger.info("Initializing HomeKit Accessory Protocol Add-on ...");
+
+    logger.info("Initializing HAP Storage ...");
+    this.hapStorage.init();
+
+    logger.info("Initializing mDNS discovery service ...");
     initDiscovery();
+
+    logger.info("Initializing HTTP server ...");
+    initHTTPServer();
+
+    logger.info("HomeKit Accessory Protocol Add-on is initialized ...");
   }
 
   /**
-   * Initialize Bonjour discovery service
+   * Initialize the advertiser
    */
-  protected void initDiscovery() {
-    Map<String, ?> info = this.hapStorage.getBridgeInformation();
-    // Current configuration number. Required.
-    // Must update when an accessory, service, or characteristic is added or removed on the accessory
-    // server.
-    // Accessories must increment the config number after a firmware update.
-    // This must have a range of 1-4294967295 and wrap to 1 when it overflows. (down to 2147483647)
-    // This value must persist across reboots, power cycles, etc.
-    int configNum = (Integer) info.get("config_num");
-    // Feature flags (e.g. "0x3" for bits 0 and 1). Required if non-zero.
-    int featureFlag = 0;
-    // Device ID (Device ID (page 36)) of the accessory. The Device ID must be formatted as
-    // "XX:XX:XX:XX:XX:XX", where "XX" is a hexadecimal string representing a byte. Required.
-    // This value is also used as the accessory's Pairing Identifier.
-    String deviceId;
-    try {
-      deviceId = Networks.getLocalMacAddress();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-    // Model name of the accessory (e.g. "Device1,1"). Required.
-    Characteristic<String> model = this.hapStorage
-        .getCharacteristicByType(1, "00000021-0000-1000-8000-0026BB765291");
-    // Protocol version string <major>.<minor> (e.g. "1.0"). Required if value is not "1.0".
-    String protocolVersion = (String) info.get("protocol_version");
-    // Current state number. Required.
-    int stateNum = (Integer) info.get("state_num");
-    // Status flags (e.g. "0x04" for bit 3). Value should be an unsigned integer. Required.
-    int statusFlag = (Integer) info.get("status_flag");
-    // Accessory Category Identifier. Required. Indicates the category that best describes the primary
-    // function of the accessory. This must have a range of 1-65535.
-    // This must persist across reboots, power cycles, etc.
-    int categoryId = (Integer) info.get("category_id");
+  protected void initDiscovery() throws IOException {
+    this.advertiser = new HAPmDNSAdvertiser(
+        this.address, this.hostname, this.macAddress, this.port, this.hapStorage);
 
-    HashMap<String, String> props = new HashMap<>();
-    props.put("c#", String.valueOf(configNum));
-    props.put("ff", String.valueOf(featureFlag));
-    props.put("id", deviceId);
-    props.put("md", model.getValue());
-    props.put("pv", protocolVersion);
-    props.put("s#", String.valueOf(stateNum));
-    props.put("sf", String.valueOf(statusFlag));
-    props.put("ci", String.valueOf(categoryId));
+    // Register the bridge service
+    this.advertiser.registerBridgeService();
+  }
 
-    // The name of the Bonjour service is the user-visible name of the accessory, e.g. "LED Bulb M123", and must
-    // match the name provided in the Accessory Information Service of the HAP Accessory object that has an
-    // instanceID of 1.
-    Characteristic<String> name = this.hapStorage
-        .getCharacteristicByType(1, "00000023-0000-1000-8000-0026BB765291");
+  /**
+   * Initialize HTTP service
+   */
+  protected void initHTTPServer() throws InterruptedException {
+    // Configure EventLoopGroup
+    this.bossGroup = new NioEventLoopGroup(1);
+    this.workerGroup = new NioEventLoopGroup();
 
-    // register service
-    try {
-      this.jmDNS.registerService(
-          ServiceInfo.create("_hap._tcp.local.", name.getValue(), this.port, 0, 0, props));
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
+    // Bootstrap the http server
+    ServerBootstrap b = new ServerBootstrap();
+    b.group(this.bossGroup, this.workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .handler(new LoggingHandler(LogLevel.INFO))
+        .childHandler(new ChannelInitializer<>() {
+          @Override
+          protected void initChannel(Channel ch) {
+            ChannelPipeline pipeline = ch.pipeline();
+            pipeline.addLast("log", new LoggingHandler(LogLevel.DEBUG));
+            pipeline.addLast("codec", new HttpServerCodec());
+            pipeline.addLast("aggregator", new HttpObjectAggregator(1073741824));
+            pipeline.addLast("hap", new HAPChannelInboundHandler(
+                hapStorage, macAddress, pinCode, registry, advertiser));
+          }
+        })
+        .option(ChannelOption.SO_BACKLOG, 128)
+        .childOption(ChannelOption.SO_KEEPALIVE, true);
+
+    // Bind network address and port, start the http server
+    b.bind(this.address, this.port).sync().channel();
   }
 
   @Override
-  public void destroy() {
-    // unregister all services
-    if (this.jmDNS != null) {
-      this.jmDNS.unregisterAllServices();
-    }
+  public void destroy() throws IOException {
+    logger.info("Destroying HomeKit Protocol Add-on ...");
+
+    logger.info("Destroying mDNS discovery service ...");
+    this.advertiser.shutdown();
+
+    logger.info("Destroying HTTP server ...");
+    // Gracefully shutdown the EventLoopGroup
+    this.bossGroup.shutdownGracefully();
+    this.workerGroup.shutdownGracefully();
+
   }
 }

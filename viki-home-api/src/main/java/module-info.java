@@ -4,7 +4,7 @@ module com.github.longkerdandy.viki.home.api {
   exports com.github.longkerdandy.viki.home.storage;
   exports com.github.longkerdandy.viki.home.util;
 
-  // common
+  // apache commons
   requires transitive org.apache.commons.lang3;
   requires transitive org.apache.commons.configuration2;
 
