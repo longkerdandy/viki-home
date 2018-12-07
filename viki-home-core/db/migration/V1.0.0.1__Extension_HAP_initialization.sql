@@ -28,11 +28,10 @@ ON ext_hap_pairing (permissions);
 /** Accessory **/
 CREATE TABLE ext_hap_accessory(
   aid INTEGER NOT NULL PRIMARY KEY ASC,
-  device_id TEXT NOT NULL,
   iid_counter INTEGER NOT NULL
 );
 -- Bridge Accessory
-INSERT INTO ext_hap_accessory (aid, device_id, iid_counter) VALUES (1, '-L8ov6yMnBE0j3nyWnwm', 7);
+INSERT INTO ext_hap_accessory (aid, iid_counter) VALUES (1, 7);
 
 /** Service **/
 CREATE TABLE ext_hap_service(
