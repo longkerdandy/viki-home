@@ -15,7 +15,7 @@ public class EventSchema {
   protected final ResourceBundle resources;       // localized label and description
 
   @JsonInclude(NON_EMPTY)
-  protected Map<String, ArgumentSchema> outputs;  // output arguments
+  protected Map<String, PropertySchema> outputs;  // output arguments
 
   /**
    * Constructor
@@ -37,7 +37,7 @@ public class EventSchema {
    * @return EventSchema
    */
   public static EventSchema create(String name, ResourceBundle resources,
-      Map<String, ArgumentSchema> outputs) {
+      Map<String, PropertySchema> outputs) {
     EventSchema action = new EventSchema(name, resources);
     action.outputs = outputs;
     return action;
@@ -65,7 +65,7 @@ public class EventSchema {
     return name;
   }
 
-  public Map<String, ArgumentSchema> getOutputs() {
+  public Map<String, PropertySchema> getOutputs() {
     return outputs;
   }
 

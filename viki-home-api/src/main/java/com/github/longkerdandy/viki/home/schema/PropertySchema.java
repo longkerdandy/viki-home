@@ -1,5 +1,6 @@
 package com.github.longkerdandy.viki.home.schema;
 
+import com.github.longkerdandy.viki.home.model.DataType;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
@@ -17,6 +18,7 @@ public class PropertySchema<T> extends DataSchema<T> {
   protected boolean writable = false;         // can be write
   protected boolean hidden = false;           // can be displayed
   protected boolean observable = false;       // can be observed
+  protected boolean required = true;          // can be null
 
   /**
    * Constructor
@@ -132,7 +134,7 @@ public class PropertySchema<T> extends DataSchema<T> {
   }
 
   /**
-   * Create PropertySchema<Object> with {@link DataType#ARRAY}
+   * Create PropertySchema<long[]> with {@link DataType#ARRAY_INTEGER}
    *
    * @param name developer friendly name
    * @param resources {@link ResourceBundle}
@@ -140,18 +142,60 @@ public class PropertySchema<T> extends DataSchema<T> {
    * @param maxLength <strong>Optional</strong> maximum length (include)
    * @param items <strong>Optional</strong> array item with unknown length
    * @param constant <strong>Optional</strong> constant value
-   * @param enumeration <strong>Optional</strong> possible values
    * @return PropertySchema<Object>
    */
-  public static PropertySchema<Object> createArrayProperty(String name, ResourceBundle resources,
-      Integer minLength, Integer maxLength, PropertySchema items,
-      String constant, String[] enumeration) {
-    PropertySchema<Object> prop = new PropertySchema<>(name, DataType.ARRAY, resources);
+  public static PropertySchema<long[]> createIntegerArrayProperty(String name,
+      ResourceBundle resources,
+      Integer minLength, Integer maxLength, PropertySchema items, long[] constant) {
+    PropertySchema<long[]> prop = new PropertySchema<>(name, DataType.ARRAY_INTEGER, resources);
     prop.minLength = minLength;
     prop.maxLength = maxLength;
-    prop.items = items;
+    prop.item = items;
     prop.constant = constant;
-    prop.enumeration = enumeration;
+    return prop;
+  }
+
+  /**
+   * Create PropertySchema<double[]> with {@link DataType#ARRAY_NUMBER}
+   *
+   * @param name developer friendly name
+   * @param resources {@link ResourceBundle}
+   * @param minLength <strong>Optional</strong> minimum length (include)
+   * @param maxLength <strong>Optional</strong> maximum length (include)
+   * @param items <strong>Optional</strong> array item with unknown length
+   * @param constant <strong>Optional</strong> constant value
+   * @return PropertySchema<Object>
+   */
+  public static PropertySchema<double[]> createNumberArrayProperty(String name,
+      ResourceBundle resources,
+      Integer minLength, Integer maxLength, PropertySchema items, double[] constant) {
+    PropertySchema<double[]> prop = new PropertySchema<>(name, DataType.ARRAY_NUMBER, resources);
+    prop.minLength = minLength;
+    prop.maxLength = maxLength;
+    prop.item = items;
+    prop.constant = constant;
+    return prop;
+  }
+
+  /**
+   * Create PropertySchema<String[]> with {@link DataType#ARRAY_STRING}
+   *
+   * @param name developer friendly name
+   * @param resources {@link ResourceBundle}
+   * @param minLength <strong>Optional</strong> minimum length (include)
+   * @param maxLength <strong>Optional</strong> maximum length (include)
+   * @param items <strong>Optional</strong> array item with unknown length
+   * @param constant <strong>Optional</strong> constant value
+   * @return PropertySchema<Object>
+   */
+  public static PropertySchema<String[]> createStringArrayProperty(String name,
+      ResourceBundle resources,
+      Integer minLength, Integer maxLength, PropertySchema items, String[] constant) {
+    PropertySchema<String[]> prop = new PropertySchema<>(name, DataType.ARRAY_STRING, resources);
+    prop.minLength = minLength;
+    prop.maxLength = maxLength;
+    prop.item = items;
+    prop.constant = constant;
     return prop;
   }
 
@@ -184,7 +228,7 @@ public class PropertySchema<T> extends DataSchema<T> {
    */
   public static PropertySchema<Object> createObjectProperty(String name, ResourceBundle resources,
       Map<String, DataSchema> properties) {
-    PropertySchema<Object> prop = new PropertySchema<>(name, DataType.Object, resources);
+    PropertySchema<Object> prop = new PropertySchema<>(name, DataType.OBJECT, resources);
     prop.properties = properties;
     return prop;
   }
@@ -219,6 +263,11 @@ public class PropertySchema<T> extends DataSchema<T> {
     return this;
   }
 
+  public PropertySchema<T> required(boolean required) {
+    this.required = required;
+    return this;
+  }
+
   public boolean isReadable() {
     return readable;
   }
@@ -235,6 +284,10 @@ public class PropertySchema<T> extends DataSchema<T> {
     return observable;
   }
 
+  public boolean isRequired() {
+    return required;
+  }
+
   @Override
   public String toString() {
     return "PropertySchema{" +
@@ -242,6 +295,7 @@ public class PropertySchema<T> extends DataSchema<T> {
         ", writable=" + writable +
         ", hidden=" + hidden +
         ", observable=" + observable +
+        ", required=" + required +
         ", name='" + name + '\'' +
         ", type=" + type +
         ", label='" + getLabel() + '\'' +
@@ -254,7 +308,7 @@ public class PropertySchema<T> extends DataSchema<T> {
         ", maxLength=" + maxLength +
         ", pattern=" + pattern +
         ", format=" + format +
-        ", items=" + items +
+        ", items=" + item +
         ", properties=" + properties +
         '}';
   }

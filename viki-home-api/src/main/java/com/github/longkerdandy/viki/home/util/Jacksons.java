@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Jackson (JSON) Util
@@ -72,9 +73,10 @@ public class Jacksons {
 
     static {
       // mapper
-      MAPPER = new ObjectMapper();
+      MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
       // serialization
       MAPPER.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+      MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
       MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
       MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
       // deserialization

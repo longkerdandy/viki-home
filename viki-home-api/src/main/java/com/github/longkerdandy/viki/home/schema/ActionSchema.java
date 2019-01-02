@@ -15,9 +15,9 @@ public class ActionSchema {
   protected final ResourceBundle resources;       // localized label and description
 
   @JsonInclude(NON_EMPTY)
-  protected Map<String, ArgumentSchema> inputs;   // input arguments
+  protected Map<String, PropertySchema> inputs;   // input arguments
   @JsonInclude(NON_EMPTY)
-  protected Map<String, ArgumentSchema> outputs;  // output arguments
+  protected Map<String, PropertySchema> outputs;  // output arguments
 
   /**
    * Constructor
@@ -40,7 +40,7 @@ public class ActionSchema {
    * @return ActionSchema
    */
   public static ActionSchema create(String name, ResourceBundle resources,
-      Map<String, ArgumentSchema> inputs, Map<String, ArgumentSchema> outputs) {
+      Map<String, PropertySchema> inputs, Map<String, PropertySchema> outputs) {
     ActionSchema action = new ActionSchema(name, resources);
     action.inputs = inputs;
     action.outputs = outputs;
@@ -69,11 +69,11 @@ public class ActionSchema {
     return name;
   }
 
-  public Map<String, ArgumentSchema> getInputs() {
+  public Map<String, PropertySchema> getInputs() {
     return inputs;
   }
 
-  public Map<String, ArgumentSchema> getOutputs() {
+  public Map<String, PropertySchema> getOutputs() {
     return outputs;
   }
 

@@ -8,7 +8,7 @@ import java.util.ResourceBundle;
  */
 public class ThingSchema {
 
-  protected final String id;                                // unique identifier
+  protected final String id;                                // schema identifier
   protected final String name;                              // developer friendly name
   protected final ResourceBundle resources;                 // localized label and description
   protected final Map<String, PropertySchema> properties;   // properties
@@ -18,7 +18,7 @@ public class ThingSchema {
   /**
    * Constructor
    *
-   * @param id unique identifier
+   * @param id schema identifier
    * @param name developer friendly name
    * @param resources {@link ResourceBundle}
    * @param properties properties

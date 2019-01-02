@@ -1,5 +1,6 @@
 package com.github.longkerdandy.viki.home.schema;
 
+import com.github.longkerdandy.viki.home.model.DataType;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -8,15 +9,17 @@ import java.util.regex.Pattern;
  * Data Schema
  *
  * <pre> The relations between {@link DataType} and generic type
- *      DataType    T
- *      INTEGER     Long
- *      NUMBER      Double
- *      STRING      String
- *      BOOLEAN     Boolean
- *      DATETIME    LocalDateTime
- *      ARRAY       Object
- *      BLOB        byte[]
- *      OBJECT      Object
+ *      DataType            T
+ *      INTEGER             Long
+ *      NUMBER              Double
+ *      STRING              String
+ *      BOOLEAN             Boolean
+ *      DATETIME            LocalDateTime
+ *      ARRAY_INTEGER       long[]
+ *      ARRAY_NUMBER        double[]
+ *      ARRAY_STRING        String[]
+ *      BLOB                byte[]
+ *      OBJECT
  * </pre>
  *
  * <pre> The relations between {@link DataType} and fields
@@ -26,7 +29,7 @@ import java.util.regex.Pattern;
  *      STRING                         *           *           *          *         *
  *      BOOLEAN                        *
  *      DATETIME     *       *         *                                                    *
- *      ARRAY                          *           *           *          *                         *
+ *      ARRAY                          *                       *          *                         *
  *      BLOB                           *                       *          *
  *      OBJECT                                                                                              *
  * </pre>
@@ -42,10 +45,10 @@ public abstract class DataSchema<T> {
   protected T[] enumeration;                      // possible values
   protected Integer minLength;                    // minimum length (include)
   protected Integer maxLength;                    // maximum length (include)
-  protected Pattern pattern;                      // regex pattern
-  protected DateTimeFormatter format;             // date format
-  protected DataSchema items;                     // array item with unknown length
-  protected Map<String, DataSchema> properties;   // array items with fixed length and order
+  protected Pattern pattern;                      // string regex pattern
+  protected DateTimeFormatter format;             // date time format
+  protected DataSchema item;                      // schema for sub array item
+  protected Map<String, DataSchema> properties;   // schema for sub objects
 
   /**
    * Constructor
@@ -112,8 +115,8 @@ public abstract class DataSchema<T> {
     return format;
   }
 
-  public DataSchema getItems() {
-    return items;
+  public DataSchema getItem() {
+    return item;
   }
 
   public Map<String, DataSchema> getProperties() {
