@@ -2,87 +2,97 @@ package com.github.longkerdandy.viki.home.schema;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.Map;
-import java.util.ResourceBundle;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Action Schema
  */
 public class ActionSchema {
 
-  protected final String name;                    // developer friendly name
-  protected final ResourceBundle resources;       // localized label and description
+  protected final String name;                    // action name
+  protected String function = "default";          // function that belong to
 
   @JsonInclude(NON_EMPTY)
-  protected Map<String, PropertySchema> inputs;   // input arguments
+  protected List<PropertySchema> inputs;          // input arguments
   @JsonInclude(NON_EMPTY)
-  protected Map<String, PropertySchema> outputs;  // output arguments
+  protected List<PropertySchema> outputs;         // output arguments
 
   /**
    * Constructor
    *
-   * @param name developer friendly name
-   * @param resources {@link ResourceBundle}
+   * @param name action name
    */
-  protected ActionSchema(String name, ResourceBundle resources) {
+  @JsonCreator
+  protected ActionSchema(@JsonProperty("name") String name) {
     this.name = name;
-    this.resources = resources;
   }
 
   /**
    * Create ActionSchema
    *
-   * @param name developer friendly name
-   * @param resources {@link ResourceBundle}
+   * @param name action name
    * @param inputs input arguments
    * @param outputs output arguments
    * @return ActionSchema
    */
-  public static ActionSchema create(String name, ResourceBundle resources,
-      Map<String, PropertySchema> inputs, Map<String, PropertySchema> outputs) {
-    ActionSchema action = new ActionSchema(name, resources);
+  public static ActionSchema create(String name, List<PropertySchema> inputs,
+      List<PropertySchema> outputs) {
+    ActionSchema action = new ActionSchema(name);
     action.inputs = inputs;
     action.outputs = outputs;
     return action;
-  }
-
-  /**
-   * Get localized label
-   *
-   * @return label
-   */
-  public String getLabel() {
-    return resources.getString("action." + name + ".label");
-  }
-
-  /**
-   * Get localized description
-   *
-   * @return description
-   */
-  public String getDescription() {
-    return resources.getString("action." + name + ".description");
   }
 
   public String getName() {
     return name;
   }
 
-  public Map<String, PropertySchema> getInputs() {
+  public String getFunction() {
+    return function;
+  }
+
+  public List<PropertySchema> getInputs() {
     return inputs;
   }
 
-  public Map<String, PropertySchema> getOutputs() {
+  public List<PropertySchema> getOutputs() {
     return outputs;
+  }
+
+  public ActionSchema function(String function) {
+    this.function = function;
+    return this;
+  }
+
+  /**
+   * Get input {@link PropertySchema} based on its name
+   *
+   * @param name schema name
+   * @return Optional {@link PropertySchema}
+   */
+  public Optional<PropertySchema> getInputByName(String name) {
+    return inputs.stream().filter(p -> p.getName().equals(name)).findFirst();
+  }
+
+  /**
+   * Get output {@link PropertySchema} based on its name
+   *
+   * @param name schema name
+   * @return Optional {@link PropertySchema}
+   */
+  public Optional<PropertySchema> getOutputByName(String name) {
+    return outputs.stream().filter(p -> p.getName().equals(name)).findFirst();
   }
 
   @Override
   public String toString() {
     return "ActionSchema{" +
         "name='" + name + '\'' +
-        ", label='" + getLabel() + '\'' +
-        ", description='" + getDescription() + '\'' +
+        ", function='" + function + '\'' +
         ", inputs=" + inputs +
         ", outputs=" + outputs +
         '}';

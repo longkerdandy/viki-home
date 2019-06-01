@@ -1,0 +1,142 @@
+{
+  "name": "mi:gateway:multifunction_gateway",
+  "functions": {
+    "light": "color_light",
+    "radio": "network_radio"
+  },
+  "properties": [
+    {
+      "name": "model",
+      "type": "string"
+    },
+    {
+      "name": "rgb",
+      "type": "integer_array",
+      "minLength": 3,
+      "maxLength": 3,
+      "items": {
+        "name": "intensity",
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+      },
+      "function": "light",
+      "writable": true,
+      "observable": true
+    },
+    {
+      "name": "protocol_version",
+      "type": "string"
+    }
+  ],
+  "actions": [
+    {
+      "name": "turn_on_light",
+      "function": "light",
+      "inputs": [
+        {
+          "name": "rgb",
+          "type": "integer_array",
+          "minLength": 3,
+          "maxLength": 3,
+          "items": {
+            "name": "intensity",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      ]
+    },
+    {
+      "name": "turn_off_light",
+      "function": "light",
+      "inputs": [
+        {
+          "name": "rgb",
+          "type": "integer_array",
+          "constant": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "turn_on_radio",
+      "function": "radio",
+      "inputs": [
+        {
+          "name": "channel",
+          "type": "integer",
+          "minimum": 10001
+        }
+      ]
+    },
+    {
+      "name": "turn_off_radio",
+      "function": "radio",
+      "inputs": [
+        {
+          "name": "channel",
+          "type": "integer",
+          "constant": 10000
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "light_turned_on",
+      "function": "light",
+      "outputs": [
+        {
+          "name": "rgb",
+          "type": "integer_array",
+          "minLength": 3,
+          "maxLength": 3,
+          "items": {
+            "name": "intensity",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      ]
+    },
+    {
+      "name": "light_changed",
+      "function": "light",
+      "outputs": [
+        {
+          "name": "rgb",
+          "type": "integer_array",
+          "minLength": 3,
+          "maxLength": 3,
+          "items": {
+            "name": "intensity",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      ]
+    },
+    {
+      "name": "light_turned_off",
+      "function": "light",
+      "outputs": [
+        {
+          "name": "rgb",
+          "type": "integer_array",
+          "constant": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

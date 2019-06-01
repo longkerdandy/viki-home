@@ -32,6 +32,7 @@ import com.github.longkerdandy.viki.home.hap.http.tlv.TLVEncoder;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVError;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVType;
 import com.github.longkerdandy.viki.home.hap.mdns.HAPmDNSAdvertiser;
+import com.github.longkerdandy.viki.home.hap.model.Bridge;
 import com.github.longkerdandy.viki.home.hap.model.Pairing;
 import com.github.longkerdandy.viki.home.hap.storage.HAPStorage;
 import com.nimbusds.srp6.SRP6CryptoParams;
@@ -183,8 +184,8 @@ public class PairSetupHandler {
     //    }
 
     // If the accessory is already paired?
-    Map<String, ?> bridgeInfo = hapStorage.getBridgeInformation();
-    int statusFlag = (Integer) bridgeInfo.get("status_flag");
+    Bridge bridge = hapStorage.getBridgeInformation();
+    int statusFlag = bridge.getStatusFlag();
     if (statusFlag != 1) {
       logger.warn("The accessory is already paired or wrong status: {}", statusFlag);
       errorTLVResponse(ctx, BAD_REQUEST, 2, TLVError.UNAVAILABLE);
@@ -466,9 +467,9 @@ public class PairSetupHandler {
     this.advertiser.reloadBridgeServiceAsync();
 
     // Load AccessoryLTPK and AccessoryLTSK
-    Map<String, ?> bridgeInfo = this.hapStorage.getBridgeInformation();
-    byte[] AccessoryLTSK = (byte[]) bridgeInfo.get("private_key");
-    byte[] AccessoryLTPK = (byte[]) bridgeInfo.get("public_key");
+    Bridge bridge = this.hapStorage.getBridgeInformation();
+    byte[] AccessoryLTSK = bridge.getPrivateKey();
+    byte[] AccessoryLTPK = bridge.getPublicKey();
 
     // Derive AccessoryX from the SRP shared secret by using HKDF-SHA-512
     byte[] AccessoryX = hkdf(K,

@@ -23,6 +23,7 @@ import com.github.longkerdandy.viki.home.hap.http.tlv.TLVDecoder;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVEncoder;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVError;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVType;
+import com.github.longkerdandy.viki.home.hap.model.Bridge;
 import com.github.longkerdandy.viki.home.hap.model.Pairing;
 import com.github.longkerdandy.viki.home.hap.storage.HAPStorage;
 import com.github.longkerdandy.viki.home.hap.storage.Registry;
@@ -170,8 +171,8 @@ public class PairVerifyHandler {
         AccessoryPairingID.getBytes(StandardCharsets.UTF_8)), iOSDevicePK);
 
     // Load AccessoryLTSK
-    Map<String, ?> bridgeInfo = this.hapStorage.getBridgeInformation();
-    byte[] AccessoryLTSK = (byte[]) bridgeInfo.get("private_key");
+    Bridge bridge = this.hapStorage.getBridgeInformation();
+    byte[] AccessoryLTSK = bridge.getPrivateKey();
 
     // Use Ed25519 to generate AccessorySignature by signing AccessoryInfo with AccessoryLTSK
     byte[] AccessorySignature;

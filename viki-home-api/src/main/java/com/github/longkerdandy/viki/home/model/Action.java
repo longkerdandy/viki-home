@@ -3,8 +3,10 @@ package com.github.longkerdandy.viki.home.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.longkerdandy.viki.home.schema.ActionSchema;
+import com.github.longkerdandy.viki.home.schema.PropertySchema;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -12,28 +14,34 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class Action {
 
+  protected final String thing;                   // thing id
   protected final String name;                    // developer friendly name
   protected final Property[] inputs;              // inputs
   protected final Property[] outputs;             // outputs
-  protected final LocalDateTime createdAt;        // timestamp
+  protected final LocalDateTime occurredAt;       // timestamp
 
   /**
    * Constructor
    *
+   * @param thing thing id
    * @param name developer friendly name
    * @param inputs inputs
    * @param outputs outputs
-   * @param createdAt timestamp
+   * @param occurredAt timestamp
    */
   @JsonCreator
-  public Action(@JsonProperty("name") String name,
-      @JsonProperty("inputs") Property[] inputs,
-      @JsonProperty("outputs") Property[] outputs,
-      @JsonProperty("createdAt") LocalDateTime createdAt) {
+  public Action(@JsonProperty("thing") String thing, @JsonProperty("name") String name,
+      @JsonProperty("inputs") Property[] inputs, @JsonProperty("outputs") Property[] outputs,
+      @JsonProperty("occurredAt") LocalDateTime occurredAt) {
+    this.thing = thing;
     this.name = name;
     this.inputs = inputs;
     this.outputs = outputs;
-    this.createdAt = createdAt;
+    this.occurredAt = occurredAt;
+  }
+
+  public String getThing() {
+    return thing;
   }
 
   public String getName() {
@@ -48,17 +56,18 @@ public class Action {
     return outputs;
   }
 
-  public LocalDateTime getCreatedAt() {
-    return createdAt;
+  public LocalDateTime getOccurredAt() {
+    return occurredAt;
   }
 
   @Override
   public String toString() {
     return "Action{" +
-        "name='" + name + '\'' +
+        "thing='" + thing + '\'' +
+        ", name='" + name + '\'' +
         ", inputs=" + Arrays.toString(inputs) +
         ", outputs=" + Arrays.toString(outputs) +
-        ", createdAt=" + createdAt +
+        ", occurredAt=" + occurredAt +
         '}';
   }
 
@@ -73,17 +82,22 @@ public class Action {
       return false;
     }
 
+    if (StringUtils.isEmpty(thing)) {
+      return false;
+    }
+
     if (StringUtils.isEmpty(name)) {
       return false;
     }
 
-    if (createdAt == null) {
+    if (occurredAt == null) {
       return false;
     }
 
     if (inputs != null) {
       for (Property property : inputs) {
-        if (!property.validate(actionSchema.getInputs().get(property.getName()))) {
+        Optional<PropertySchema> propertySchema = actionSchema.getInputByName(property.getName());
+        if (propertySchema.isEmpty() || !property.validate(propertySchema.get())) {
           return false;
         }
       }
@@ -91,7 +105,8 @@ public class Action {
 
     if (outputs != null) {
       for (Property property : outputs) {
-        if (!property.validate(actionSchema.getOutputs().get(property.getName()))) {
+        Optional<PropertySchema> propertySchema = actionSchema.getOutputByName(property.getName());
+        if (propertySchema.isEmpty() || !property.validate(propertySchema.get())) {
           return false;
         }
       }

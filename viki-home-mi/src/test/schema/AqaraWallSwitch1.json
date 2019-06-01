@@ -1,0 +1,55 @@
+{
+  "name": "aqara:zigbee:1_button_wall_switch",
+  "functions": {
+    "wall_switch": "wall_switch"
+  },
+  "properties": [
+    {
+      "name": "model",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "enumeration": [
+        "on",
+        "off"
+      ],
+      "function": "wall_switch",
+      "writable": true,
+      "observable": true
+    }
+  ],
+  "actions": [
+    {
+      "name": "switch",
+      "function": "wall_switch",
+      "inputs": [
+        {
+          "name": "status",
+          "type": "string",
+          "enumeration": [
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "changed",
+      "function": "wall_switch",
+      "outputs": [
+        {
+          "name": "status",
+          "type": "string",
+          "enumeration": [
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ]
+}

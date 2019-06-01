@@ -12,7 +12,6 @@ public class Registry {
   // Thread safe HashMap as Repository (iOSDevicePairingID : ChannelHandlerContext)
   private final Map<String, ChannelHandlerContext> repo = new ConcurrentHashMap<>();
 
-
   /**
    * Save session for the device
    *

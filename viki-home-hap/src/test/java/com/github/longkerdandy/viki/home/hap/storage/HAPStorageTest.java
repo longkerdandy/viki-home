@@ -1,17 +1,16 @@
 package com.github.longkerdandy.viki.home.hap.storage;
 
-import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.http.request.CharacteristicWriteRequestTarget;
 import com.github.longkerdandy.viki.home.hap.http.response.CharacteristicWriteResponseTarget;
+import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.model.Accessory;
+import com.github.longkerdandy.viki.home.hap.model.Bridge;
 import com.github.longkerdandy.viki.home.hap.model.Characteristic;
 import com.github.longkerdandy.viki.home.hap.model.Pairing;
 import com.github.longkerdandy.viki.home.hap.model.Service;
 import com.github.longkerdandy.viki.home.hap.model.property.Format;
 import com.github.longkerdandy.viki.home.hap.model.property.Permission;
-import com.github.longkerdandy.viki.home.hap.model.property.Unit;
 import com.github.longkerdandy.viki.home.hap.util.Ciphers;
-import com.github.longkerdandy.viki.home.storage.sqlite.SQLiteStorage;
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
@@ -26,20 +25,19 @@ import org.junit.Test;
 
 public class HAPStorageTest {
 
-  private static HAPStorage hapStorage;
+  private static HAPStorage storage;
 
   @BeforeClass
   public static void init() throws IOException {
-    String path = File.createTempFile("viki_home_", ".db").getAbsolutePath();
-    SQLiteStorage storage = new SQLiteStorage(new MapConfiguration(
+    String path = File.createTempFile("viki-home-hap-", ".db").getAbsolutePath();
+    storage = new HAPStorage(new MapConfiguration(
         Map.of("storage.jdbc.url", "jdbc:sqlite:" + path,
             "storage.sqlite.pragma.foreign_keys", "true")));
-    hapStorage = new HAPStorage(storage.getJdbi());
 
     storage.getJdbi().useHandle(handle -> {
       handle.execute("DROP TABLE IF EXISTS ext_hap_bridge");
       handle.execute("CREATE TABLE ext_hap_bridge(\n"
-          + "  aid INTEGER NOT NULL PRIMARY KEY ASC,\n"
+          + "  aid INTEGER NOT NULL,\n"
           + "  aid_counter INTEGER NOT NULL,\n"
           + "  config_num INTEGER NOT NULL,\n"
           + "  state_num INTEGER NOT NULL,\n"
@@ -47,19 +45,19 @@ public class HAPStorageTest {
           + "  status_flag INTEGER NOT NULL,\n"
           + "  category_id INTEGER NOT NULL,\n"
           + "  private_key BLOB,\n"
-          + "  public_key BLOB\n"
+          + "  public_key BLOB,\n"
+          + "  PRIMARY KEY (aid ASC)\n"
           + ")");
-      handle.execute(
-          "INSERT INTO ext_hap_bridge (aid, aid_counter, config_num, protocol_version, state_num, status_flag, category_id)\n"
-              + "VALUES (1, 1, 1, '1.0', 1, 1, 2)");
     });
 
     storage.getJdbi().useHandle(handle -> {
       handle.execute("DROP TABLE IF EXISTS ext_hap_pairing");
+      handle.execute("DROP INDEX IF EXISTS idx_ext_hap_pairing_permissions");
       handle.execute("CREATE TABLE ext_hap_pairing(\n"
-          + "  pairing_id TEXT NOT NULL PRIMARY KEY ASC,\n"
+          + "  pairing_id TEXT NOT NULL,\n"
           + "  public_key BLOB NOT NULL,\n"
-          + "  permissions INTEGER NOT NULL\n"
+          + "  permissions INTEGER NOT NULL,\n"
+          + "  PRIMARY KEY (pairing_id ASC)\n"
           + ")");
       handle.execute("CREATE INDEX idx_ext_hap_pairing_permissions\n"
           + "ON ext_hap_pairing (permissions)");
@@ -68,12 +66,10 @@ public class HAPStorageTest {
     storage.getJdbi().useHandle(handle -> {
       handle.execute("DROP TABLE IF EXISTS ext_hap_accessory");
       handle.execute("CREATE TABLE ext_hap_accessory(\n"
-          + "  aid INTEGER NOT NULL PRIMARY KEY ASC,\n"
-          + "  device_id TEXT NOT NULL,\n"
-          + "  iid_counter INTEGER NOT NULL\n"
+          + "  aid INTEGER NOT NULL,\n"
+          + "  iid_counter INTEGER NOT NULL,\n"
+          + "  PRIMARY KEY (aid ASC)\n"
           + ")");
-      handle.execute("INSERT INTO ext_hap_accessory (aid, device_id, iid_counter) "
-          + "VALUES (1, '-L8ov6yMnBE0j3nyWnwm', 7)");
     });
 
     storage.getJdbi().useHandle(handle -> {
@@ -86,16 +82,15 @@ public class HAPStorageTest {
           + "  is_hidden INTEGER,\n"
           + "  is_primary INTEGER,\n"
           + "  linked_services TEXT,\n"
-          + "  PRIMARY KEY(aid, sid)\n"
+          + "  PRIMARY KEY(aid, sid ASC)\n"
           + ")");
       handle.execute("CREATE UNIQUE INDEX idx_ext_hap_service_type\n"
           + "ON ext_hap_service (aid, type)");
-      handle.execute("INSERT INTO ext_hap_service (aid, sid, type)\n"
-          + "VALUES (1, 1, '0000003E-0000-1000-8000-0026BB765291')");
     });
 
     storage.getJdbi().useHandle(handle -> {
       handle.execute("DROP TABLE IF EXISTS ext_hap_characteristic");
+      handle.execute("DROP INDEX IF EXISTS idx_ext_hap_characteristic_service");
       handle.execute("DROP INDEX IF EXISTS idx_ext_hap_characteristic_type");
       handle.execute("CREATE TABLE ext_hap_characteristic(\n"
           + "  aid INTEGER NOT NULL,\n"
@@ -115,67 +110,62 @@ public class HAPStorageTest {
           + "  max_data_length INTEGER,\n"
           + "  valid_values TEXT,\n"
           + "  valid_values_range TEXT,\n"
-          + "  PRIMARY KEY(aid, cid),\n"
-          + "  FOREIGN KEY(aid, sid) REFERENCES ext_hap_service(aid, sid)\n"
+          + "  PRIMARY KEY(aid, cid ASC),\n"
+          + "  FOREIGN KEY(aid, sid) REFERENCES ext_hap_service(aid, sid) ON DELETE CASCADE ON UPDATE NO ACTION\n"
           + ")");
+      handle.execute("CREATE INDEX idx_ext_hap_characteristic_service\n"
+          + "ON ext_hap_characteristic (aid, sid)");
       handle.execute("CREATE UNIQUE INDEX idx_ext_hap_characteristic_type\n"
           + "ON ext_hap_characteristic (aid, type)");
-      handle.execute(
-          "INSERT INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format)\n"
-              + "VALUES (1, 2, 1, '00000014-0000-1000-8000-0026BB765291', null, 'pw', 'bool')");
-      handle.execute(
-          "INSERT INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format, max_length)\n"
-              + "VALUES (1, 3, 1, '00000021-0000-1000-8000-0026BB765291', 'V.I.K.I Home Open Source Project', 'pr', 'string', 64)");
-      handle.execute(
-          "INSERT INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format, unit, min_value, max_value, min_step)\n"
-              + "VALUES (1, 4, 1, '00000035-0000-1000-8000-0026BB765291', '23.6', 'pr,pw,ev', 'float', 'celsius', 10.0, 38.0, 0.1)");
     });
+
+    storage.init();
   }
 
   @Test
   public void getBridgeInformationTest() {
-    Map<String, ?> r = hapStorage.getBridgeInformation();
-    assert r != null;
-    assert (Integer) r.get("aid") == 1;
-    assert (Integer) r.get("config_num") == 1;
-    assert r.get("protocol_version").equals("1.0");
-    assert (Integer) r.get("state_num") == 1;
-    assert (Integer) r.get("status_flag") == 1;
-    assert (Integer) r.get("category_id") == 2;
+    Bridge b = storage.getBridgeInformation();
+    assert b != null;
+    assert b.getInstanceId() == 1;
+    assert b.getConfigNum() == 1;
+    assert b.getProtocolVersion().equals("1.0");
+    assert b.getStateNum() == 1;
+    assert b.getStatusFlag() == 1;
+    assert b.getCategoryId() == 2;
   }
 
   @Test
   public void nextAccessoryIdTest() {
-    assert hapStorage.nextAccessoryId() == 2;
-    assert hapStorage.nextAccessoryId() == 3;
-    assert hapStorage.nextAccessoryId() == 4;
-    assert hapStorage.nextAccessoryId() == 5;
+    assert storage.nextAccessoryId() == 2;
+    assert storage.nextAccessoryId() == 3;
+    assert storage.nextAccessoryId() == 4;
+    assert storage.nextAccessoryId() == 5;
   }
 
   @Test
   public void getAccessoriesTest() {
-    List<Accessory> accessories = hapStorage.getAccessories();
+    List<Accessory> accessories = storage.getAccessories();
     assert accessories.size() == 1;
     assert accessories.get(0).getServices().size() == 1;
     assert accessories.get(0).getServices().get(0).getInstanceId() == 1;
     assert accessories.get(0).getServices().get(0).getType().toString()
         .equalsIgnoreCase("0000003E-0000-1000-8000-0026BB765291");
-    assert accessories.get(0).getServices().get(0).getCharacteristics().size() == 3;
+    assert accessories.get(0).getServices().get(0).getCharacteristics().size() == 6;
   }
 
   @Test
   public void getServicesByAccessoryTest() {
-    List<Service> services = hapStorage.getServicesByAccessory(1);
+    List<Service> services = storage.getServicesByAccessory(1);
     assert services.size() == 1;
     assert services.get(0).getInstanceId() == 1;
     assert services.get(0).getType().toString()
         .equalsIgnoreCase("0000003E-0000-1000-8000-0026BB765291");
-    assert services.get(0).getCharacteristics().size() == 3;
+    assert services.get(0).getCharacteristics().size() == 6;
   }
 
   @Test
   public void getCharacteristicByIdTest() {
-    Optional<Characteristic> oc = hapStorage.getCharacteristicById(1, 2);
+    Optional<Characteristic> oc = storage.getCharacteristicById(1, 2);
     assert oc.isPresent();
     Characteristic c = oc.get();
     assert c.getInstanceId() == 2;
@@ -198,13 +188,13 @@ public class HAPStorageTest {
 
   @Test
   public void getCharacteristicByServiceTest() {
-    List<Characteristic> characteristics = hapStorage.getCharacteristicsByService(1, 1);
-    assert characteristics.size() == 3;
+    List<Characteristic> characteristics = storage.getCharacteristicsByService(1, 1);
+    assert characteristics.size() == 6;
   }
 
   @Test
   public void getCharacteristicByTypeTest() {
-    Optional<Characteristic> oc = hapStorage
+    Optional<Characteristic> oc = storage
         .getCharacteristicByType(1, "00000014-0000-1000-8000-0026BB765291");
     assert oc.isPresent();
     Characteristic c = oc.get();
@@ -225,10 +215,10 @@ public class HAPStorageTest {
     assert c.getValidValues() == null;
     assert c.getValidValuesRange() == null;
 
-    oc = hapStorage.getCharacteristicByType(1, "00000021-0000-1000-8000-0026BB765291");
+    oc = storage.getCharacteristicByType(1, "00000021-0000-1000-8000-0026BB765291");
     assert oc.isPresent();
     c = oc.get();
-    assert c.getInstanceId() == 3;
+    assert c.getInstanceId() == 4;
     assert c.getType().toString().equalsIgnoreCase("00000021-0000-1000-8000-0026BB765291");
     assert c.getValue().equals("V.I.K.I Home Open Source Project");
     assert c.getPermissions().size() == 1;
@@ -244,43 +234,21 @@ public class HAPStorageTest {
     assert c.getMaxDataLength() == null;
     assert c.getValidValues() == null;
     assert c.getValidValuesRange() == null;
-
-    oc = hapStorage.getCharacteristicByType(1, "00000035-0000-1000-8000-0026BB765291");
-    assert oc.isPresent();
-    c = oc.get();
-    assert c.getInstanceId() == 4;
-    assert c.getType().toString().equalsIgnoreCase("00000035-0000-1000-8000-0026BB765291");
-    assert (Double) c.getValue() == 23.6;
-    assert c.getPermissions().size() == 3;
-    assert c.getPermissions().contains(Permission.PAIRED_READ);
-    assert c.getPermissions().contains(Permission.PAIRED_WRITE);
-    assert c.getPermissions().contains(Permission.NOTIFY);
-    assert c.getEnableEvent() == null;
-    assert c.getDescription() == null;
-    assert c.getFormat() == Format.FLOAT;
-    assert c.getUnit() == Unit.CELSIUS;
-    assert (Double) c.getMinValue() == 10.0;
-    assert (Double) c.getMaxValue() == 38.0;
-    assert (Double) c.getMinStep() == 0.1;
-    assert c.getMaxLength() == null;
-    assert c.getMaxDataLength() == null;
-    assert c.getValidValues() == null;
-    assert c.getValidValuesRange() == null;
   }
 
   @Test
   public void saveCharacteristicsTest() {
-    CharacteristicWriteRequestTarget t1 = new CharacteristicWriteRequestTarget(1L, 3L, "Mithril");
+    CharacteristicWriteRequestTarget t1 = new CharacteristicWriteRequestTarget(1L, 8L, "Mithril");
     CharacteristicWriteRequestTarget t2 = new CharacteristicWriteRequestTarget(1L, 5L,
         "LongkerDandy's Bridge");
-    List<CharacteristicWriteResponseTarget> r = hapStorage.saveCharacteristics(List.of(t1, t2));
+    List<CharacteristicWriteResponseTarget> r = storage.saveCharacteristics(List.of(t1, t2));
     assert r.size() == 2;
     assert r.get(0).getAccessoryId() == 1;
-    assert r.get(0).getInstanceId() == 3;
-    assert r.get(0).getStatus() == Status.SUCCESS;
+    assert r.get(0).getInstanceId() == 8;
+    assert r.get(0).getStatus() == Status.RESOURCE_NOT_EXIST;
     assert r.get(1).getAccessoryId() == 1;
     assert r.get(1).getInstanceId() == 5;
-    assert r.get(1).getStatus() == Status.RESOURCE_NOT_EXIST;
+    assert r.get(1).getStatus() == Status.SUCCESS;
   }
 
   @Test
@@ -289,31 +257,31 @@ public class HAPStorageTest {
     KeyPair keyPair = Ciphers.ed25519KeyGen();
     byte[] publicKey = ((EdDSAPublicKey) keyPair.getPublic()).getAbyte();
     Pairing pairing = new Pairing("Device 1", publicKey, 1);
-    assert hapStorage.savePairing(pairing);
-    Optional<Pairing> opt = hapStorage.getPairingById("Device 1");
+    assert storage.savePairing(pairing);
+    Optional<Pairing> opt = storage.getPairingById("Device 1");
     assert opt.isPresent();
     assert opt.get().getParingId().equals("Device 1");
     assert Arrays.equals(opt.get().getPublicKey(), publicKey);
     assert opt.get().getPermissions() == 1;
-    assert hapStorage.getPairings().size() == 1;
+    assert storage.getPairings().size() == 1;
     keyPair = Ciphers.ed25519KeyGen();
     publicKey = ((EdDSAPublicKey) keyPair.getPublic()).getAbyte();
     pairing = new Pairing("Device 2", publicKey, 0);
-    assert hapStorage.savePairing(pairing);
-    opt = hapStorage.getPairingById("Device 2");
+    assert storage.savePairing(pairing);
+    opt = storage.getPairingById("Device 2");
     assert opt.isPresent();
     assert opt.get().getParingId().equals("Device 2");
     assert Arrays.equals(opt.get().getPublicKey(), publicKey);
     assert opt.get().getPermissions() == 0;
-    assert hapStorage.getPairings().size() == 2;
+    assert storage.getPairings().size() == 2;
 
     // clear failed
-    assert hapStorage.clearPairingsIfNoAdmin().isEmpty();
-    assert hapStorage.getPairings().size() == 2;
+    assert storage.clearPairingsIfNoAdmin().isEmpty();
+    assert storage.getPairings().size() == 2;
 
     // no update
-    assert hapStorage.savePairing(pairing);
-    opt = hapStorage.getPairingById("Device 2");
+    assert storage.savePairing(pairing);
+    opt = storage.getPairingById("Device 2");
     assert opt.isPresent();
     assert opt.get().getParingId().equals("Device 2");
     assert Arrays.equals(opt.get().getPublicKey(), publicKey);
@@ -321,8 +289,8 @@ public class HAPStorageTest {
 
     // update permission
     pairing = new Pairing("Device 2", publicKey, 1);
-    assert hapStorage.savePairing(pairing);
-    opt = hapStorage.getPairingById("Device 2");
+    assert storage.savePairing(pairing);
+    opt = storage.getPairingById("Device 2");
     assert opt.isPresent();
     assert opt.get().getParingId().equals("Device 2");
     assert Arrays.equals(opt.get().getPublicKey(), publicKey);
@@ -332,31 +300,31 @@ public class HAPStorageTest {
     keyPair = Ciphers.ed25519KeyGen();
     publicKey = ((EdDSAPublicKey) keyPair.getPublic()).getAbyte();
     pairing = new Pairing("Device 2", publicKey, 1);
-    assert !hapStorage.savePairing(pairing);
-    opt = hapStorage.getPairingById("Device 2");
+    assert !storage.savePairing(pairing);
+    opt = storage.getPairingById("Device 2");
     assert opt.isPresent();
     assert opt.get().getParingId().equals("Device 2");
     assert !Arrays.equals(opt.get().getPublicKey(), publicKey);
     assert opt.get().getPermissions() == 1;
 
     // remove
-    hapStorage.removePairingById("Device 1");
-    assert hapStorage.getPairingById("Device 1").isEmpty();
-    assert hapStorage.getPairingById("Device 2").isPresent();
-    assert hapStorage.getPairings().size() == 1;
-    hapStorage.removePairingById("Device 2");
-    assert hapStorage.getPairingById("Device 1").isEmpty();
-    assert hapStorage.getPairingById("Device 2").isEmpty();
-    assert hapStorage.getPairings().size() == 0;
+    storage.removePairingById("Device 1");
+    assert storage.getPairingById("Device 1").isEmpty();
+    assert storage.getPairingById("Device 2").isPresent();
+    assert storage.getPairings().size() == 1;
+    storage.removePairingById("Device 2");
+    assert storage.getPairingById("Device 1").isEmpty();
+    assert storage.getPairingById("Device 2").isEmpty();
+    assert storage.getPairings().size() == 0;
 
     // clear success
-    assert hapStorage.clearPairingsIfNoAdmin().size() == 0;
+    assert storage.clearPairingsIfNoAdmin().size() == 0;
     keyPair = Ciphers.ed25519KeyGen();
     publicKey = ((EdDSAPublicKey) keyPair.getPublic()).getAbyte();
     pairing = new Pairing("Device 2", publicKey, 0);
-    assert hapStorage.savePairing(pairing);
-    assert hapStorage.clearPairingsIfNoAdmin().size() == 1;
-    assert hapStorage.getPairingById("Device 2").isEmpty();
-    assert hapStorage.getPairings().size() == 0;
+    assert storage.savePairing(pairing);
+    assert storage.clearPairingsIfNoAdmin().size() == 1;
+    assert storage.getPairingById("Device 2").isEmpty();
+    assert storage.getPairings().size() == 0;
   }
 }

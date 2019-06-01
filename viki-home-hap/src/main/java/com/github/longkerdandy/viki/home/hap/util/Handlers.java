@@ -10,8 +10,8 @@ import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.http.response.ErrorResponse;
+import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVEncoder;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVError;
 import com.github.longkerdandy.viki.home.hap.http.tlv.TLVType;

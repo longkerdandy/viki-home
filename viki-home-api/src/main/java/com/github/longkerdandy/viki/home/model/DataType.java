@@ -15,8 +15,7 @@ public enum DataType {
   ARRAY_INTEGER("integer_array"),     // long[]
   ARRAY_NUMBER("number_array"),       // double[]
   ARRAY_STRING("string_array"),       // String[]
-  BLOB("blob"),                       // byte[]
-  OBJECT("object");                   // Object[]
+  BLOB("blob");                       // byte[]
 
   private final String value;
 

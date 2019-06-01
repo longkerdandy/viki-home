@@ -1,6 +1,11 @@
 module com.github.longkerdandy.viki.home.api {
+  // for jackson only
+  opens com.github.longkerdandy.viki.home.schema to com.fasterxml.jackson.databind;
+
   // exports
-  exports com.github.longkerdandy.viki.home.addon;
+  exports com.github.longkerdandy.viki.home.ext;
+  exports com.github.longkerdandy.viki.home.model;
+  exports com.github.longkerdandy.viki.home.schema;
   exports com.github.longkerdandy.viki.home.storage;
   exports com.github.longkerdandy.viki.home.util;
 
@@ -16,7 +21,9 @@ module com.github.longkerdandy.viki.home.api {
 
   // database
   requires transitive java.sql;
-  requires transitive jdbi3.core;   // TODO: Automatic Module Name
+  requires transitive sqlite.jdbc;            // TODO: Automatic Module Name
+  requires transitive org.jdbi.v3.core;
+  requires transitive org.jdbi.v3.sqlite;
 
   // logging
   requires transitive org.slf4j;

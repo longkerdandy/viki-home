@@ -15,13 +15,13 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.http.request.CharacteristicsWriteRequest;
 import com.github.longkerdandy.viki.home.hap.http.response.AccessoriesResponse;
 import com.github.longkerdandy.viki.home.hap.http.response.CharacteristicReadResponseTarget;
 import com.github.longkerdandy.viki.home.hap.http.response.CharacteristicWriteResponseTarget;
 import com.github.longkerdandy.viki.home.hap.http.response.CharacteristicsReadResponse;
 import com.github.longkerdandy.viki.home.hap.http.response.CharacteristicsWriteResponse;
+import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.model.Accessory;
 import com.github.longkerdandy.viki.home.hap.model.Characteristic;
 import com.github.longkerdandy.viki.home.hap.storage.HAPStorage;

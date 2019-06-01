@@ -1,0 +1,95 @@
+{
+  "name": "aqara:zigbee:2_button_wall_switch",
+  "functions": {
+    "wall_switch_left": "wall_switch",
+    "wall_switch_right": "wall_switch"
+  },
+  "properties": [
+    {
+      "name": "model",
+      "type": "string"
+    },
+    {
+      "name": "status_left",
+      "type": "string",
+      "enumeration": [
+        "on",
+        "off"
+      ],
+      "function": "wall_switch_left",
+      "writable": true,
+      "observable": true
+    },
+    {
+      "name": "status_right",
+      "type": "string",
+      "enumeration": [
+        "on",
+        "off"
+      ],
+      "function": "wall_switch_right",
+      "writable": true,
+      "observable": true
+    }
+  ],
+  "actions": [
+    {
+      "name": "switch_left",
+      "function": "wall_switch_left",
+      "inputs": [
+        {
+          "name": "status_left",
+          "type": "string",
+          "enumeration": [
+            "on",
+            "off"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "switch_right",
+      "function": "wall_switch_right",
+      "inputs": [
+        {
+          "name": "status_right",
+          "type": "string",
+          "enumeration": [
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "left_changed",
+      "function": "wall_switch_left",
+      "outputs": [
+        {
+          "name": "status_left",
+          "type": "string",
+          "enumeration": [
+            "on",
+            "off"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "right_changed",
+      "function": "wall_switch_right",
+      "outputs": [
+        {
+          "name": "status_right",
+          "type": "string",
+          "enumeration": [
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ]
+}

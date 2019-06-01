@@ -40,12 +40,10 @@ public class PairingsHandler {
 
   // HomeKit Accessory Protocol related storage
   private final HAPStorage hapStorage;
-
-  // session registry
-  private Registry registry;
-
   // mDNS
   private final HAPmDNSAdvertiser advertiser;
+  // session registry
+  private Registry registry;
 
   /**
    * Constructor

@@ -2,79 +2,78 @@ package com.github.longkerdandy.viki.home.schema;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.Map;
-import java.util.ResourceBundle;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Event Schema
  */
 public class EventSchema {
 
-  protected final String name;                    // developer friendly name
-  protected final ResourceBundle resources;       // localized label and description
+  protected final String name;                    // event name
+  protected String function = "default";          // function that belong to
 
   @JsonInclude(NON_EMPTY)
-  protected Map<String, PropertySchema> outputs;  // output arguments
+  protected List<PropertySchema> outputs;         // output arguments
 
   /**
    * Constructor
    *
-   * @param name developer friendly name
-   * @param resources {@link ResourceBundle}
+   * @param name event name
    */
-  protected EventSchema(String name, ResourceBundle resources) {
+  @JsonCreator
+  protected EventSchema(@JsonProperty("name") String name) {
     this.name = name;
-    this.resources = resources;
   }
 
   /**
    * Create EventSchema
    *
-   * @param name developer friendly name
-   * @param resources {@link ResourceBundle}
+   * @param name event name
    * @param outputs output arguments
    * @return EventSchema
    */
-  public static EventSchema create(String name, ResourceBundle resources,
-      Map<String, PropertySchema> outputs) {
-    EventSchema action = new EventSchema(name, resources);
+  public static EventSchema create(String name, List<PropertySchema> outputs) {
+    EventSchema action = new EventSchema(name);
     action.outputs = outputs;
     return action;
-  }
-
-  /**
-   * Get localized label
-   *
-   * @return label
-   */
-  public String getLabel() {
-    return resources.getString("event." + name + ".label");
-  }
-
-  /**
-   * Get localized description
-   *
-   * @return description
-   */
-  public String getDescription() {
-    return resources.getString("event." + name + ".description");
   }
 
   public String getName() {
     return name;
   }
 
-  public Map<String, PropertySchema> getOutputs() {
+  public String getFunction() {
+    return function;
+  }
+
+  public List<PropertySchema> getOutputs() {
     return outputs;
+  }
+
+  public EventSchema function(String function) {
+    this.function = function;
+    return this;
+  }
+
+  /**
+   * Get output {@link PropertySchema} based on its name
+   *
+   * @param name schema name
+   * @return Optional {@link PropertySchema}
+   */
+  public Optional<PropertySchema> getOutputByName(String name) {
+    return outputs.stream().filter(p -> p.getName().equals(name)).findFirst();
   }
 
   @Override
   public String toString() {
-    return "ActionSchema{" +
+    return "EventSchema{" +
         "name='" + name + '\'' +
-        ", label='" + getLabel() + '\'' +
-        ", description='" + getDescription() + '\'' +
+        ", function='" + function + '\'' +
         ", outputs=" + outputs +
         '}';
   }

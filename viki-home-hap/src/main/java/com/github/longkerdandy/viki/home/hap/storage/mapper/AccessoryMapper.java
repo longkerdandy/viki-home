@@ -15,7 +15,6 @@ public class AccessoryMapper implements RowMapper<Accessory> {
   @Override
   public Accessory map(ResultSet rs, StatementContext ctx) throws SQLException {
     Long instanceId = ResultSets.getLong(rs, "aid");
-
     return new Accessory(instanceId, null);
   }
 }

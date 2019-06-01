@@ -32,14 +32,14 @@ public class NetworksTest {
 
   @Test
   public void testGetHostname() throws IOException {
-    String hostname = Networks.getLocalHostname(Networks.getLocalInetAddress());
+    String hostname = Networks.getHostname(Networks.getLocalInetAddress());
     assert hostname != null;
     assert StringUtils.isNotBlank(hostname);
   }
 
   @Test
   public void testGetMacAddress() throws IOException {
-    String mac = Networks.getLocalMacAddress(Networks.getLocalInetAddress());
+    String mac = Networks.getMacAddress(Networks.getLocalInetAddress());
     assert mac != null;
     assert StringUtils.isNotBlank(mac);
     assert mac.matches("\\w{2}:\\w{2}:\\w{2}:\\w{2}:\\w{2}:\\w{2}");

@@ -1,4 +1,5 @@
 module com.github.longkerdandy.viki.home.hap {
+
   // for jackson only
   opens com.github.longkerdandy.viki.home.hap.model to com.fasterxml.jackson.databind;
   opens com.github.longkerdandy.viki.home.hap.model.property to com.fasterxml.jackson.databind;
@@ -7,6 +8,9 @@ module com.github.longkerdandy.viki.home.hap {
 
   // project api
   requires com.github.longkerdandy.viki.home.api;
+
+  // database migration
+  requires org.flywaydb.core;
 
   // mDNS
   requires jmdns;
@@ -30,6 +34,6 @@ module com.github.longkerdandy.viki.home.hap {
   requires org.apache.httpcomponents.httpclient;
 
   // service
-  provides com.github.longkerdandy.viki.home.addon.ProtocolAddOnFactory
-      with com.github.longkerdandy.viki.home.hap.HomeKitProtocolAddOnFactory;
+  provides com.github.longkerdandy.viki.home.ext.ControllerExtFactory
+      with com.github.longkerdandy.viki.home.hap.HomeKitProtocolExtFactory;
 }

@@ -92,6 +92,13 @@ public class ResultSets {
   }
 
   /**
+   * Get Bytes from ResultSet
+   */
+  public static byte[] getBytes(ResultSet rs, String columnLabel) throws SQLException {
+    return rs.getBytes(columnLabel);
+  }
+
+  /**
    * Get Blob from ResultSet
    */
   public static Blob getBlob(ResultSet rs, String columnLabel) throws SQLException {

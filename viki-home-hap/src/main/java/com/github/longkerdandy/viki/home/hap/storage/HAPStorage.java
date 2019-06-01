@@ -1,16 +1,18 @@
 package com.github.longkerdandy.viki.home.hap.storage;
 
 import static com.github.longkerdandy.viki.home.hap.util.Ciphers.ed25519KeyGen;
+import static com.github.longkerdandy.viki.home.util.SQLites.parseSQLitePragma;
 
-import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.http.request.CharacteristicWriteRequestTarget;
 import com.github.longkerdandy.viki.home.hap.http.response.CharacteristicWriteResponseTarget;
+import com.github.longkerdandy.viki.home.hap.http.response.Status;
 import com.github.longkerdandy.viki.home.hap.model.Accessory;
+import com.github.longkerdandy.viki.home.hap.model.Bridge;
 import com.github.longkerdandy.viki.home.hap.model.Characteristic;
 import com.github.longkerdandy.viki.home.hap.model.Pairing;
 import com.github.longkerdandy.viki.home.hap.model.Service;
 import com.github.longkerdandy.viki.home.hap.storage.mapper.AccessoryMapper;
-import com.github.longkerdandy.viki.home.hap.storage.mapper.BridgeInformationMapper;
+import com.github.longkerdandy.viki.home.hap.storage.mapper.BridgeMapper;
 import com.github.longkerdandy.viki.home.hap.storage.mapper.CharacteristicMapper;
 import com.github.longkerdandy.viki.home.hap.storage.mapper.PairingMapper;
 import com.github.longkerdandy.viki.home.hap.storage.mapper.ServiceMapper;
@@ -19,73 +21,134 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import javax.sql.DataSource;
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import org.apache.commons.configuration2.AbstractConfiguration;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlite3.SQLitePlugin;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteDataSource;
 
 /**
  * Storage Layer for HomeKit Accessory Protocol
  */
 public class HAPStorage {
 
-  // Jdbi Instance
+  // Jdbi instance
   private final Jdbi jdbi;
-
-  // Jdbi mappers
-  private final BridgeInformationMapper bridgeInformationMapper;
-  private final AccessoryMapper accessoryMapper;
-  private final ServiceMapper serviceMapper;
-  private final CharacteristicMapper characteristicMapper;
-  private final PairingMapper pairingMapper;
+  // DataSource
+  private final SQLiteDataSource ds;
 
   /**
    * Constructor
    *
-   * @param jdbi Jdbi Instance
+   * @param config Storage Configuration
    */
-  public HAPStorage(Jdbi jdbi) {
-    this.jdbi = jdbi;
-    this.bridgeInformationMapper = new BridgeInformationMapper();
-    this.accessoryMapper = new AccessoryMapper();
-    this.serviceMapper = new ServiceMapper();
-    this.characteristicMapper = new CharacteristicMapper();
-    this.pairingMapper = new PairingMapper();
+  public HAPStorage(AbstractConfiguration config) {
+    SQLiteConfig sc = new SQLiteConfig(parseSQLitePragma(config));
+    this.ds = new SQLiteDataSource(sc);
+    this.ds.setUrl(config.getString("storage.jdbc.url"));
+    this.jdbi = Jdbi.create(this.ds).installPlugin(new SQLitePlugin());
+    this.jdbi.registerRowMapper(new BridgeMapper());
+    this.jdbi.registerRowMapper(new AccessoryMapper());
+    this.jdbi.registerRowMapper(new ServiceMapper());
+    this.jdbi.registerRowMapper(new CharacteristicMapper());
+    this.jdbi.registerRowMapper(new PairingMapper());
+  }
+
+  /**
+   * Get the {@link Jdbi} instance. Jdbi instances are thread-safe and do not own any database resources.
+   * Typically applications create a single, shared Jdbi instance, and set up any common
+   * configuration there.
+   *
+   * @return {@link Jdbi} instance
+   */
+  public Jdbi getJdbi() {
+    return this.jdbi;
+  }
+
+  /**
+   * Get the {@link DataSource} instance. This is used for database migration.
+   *
+   * @return {@link DataSource} instance
+   */
+  public DataSource getDataSource() {
+    return this.ds;
   }
 
   /**
    * Initialize {@link HAPStorage}
    */
   public void init() {
-    // key generation
+    // Bridge
     KeyPair keyPair = ed25519KeyGen();
     byte[] privateKey = ((EdDSAPrivateKey) keyPair.getPrivate()).getSeed();
     byte[] publicKey = ((EdDSAPublicKey) keyPair.getPublic()).getAbyte();
-    // save key pair if bridge's values are null
     this.jdbi.useHandle(handle ->
         handle.createUpdate(
-            "UPDATE ext_hap_bridge SET "
-                + "private_key = CASE WHEN private_key IS NULL THEN :privateKey ELSE private_key END, "
-                + "public_key = CASE WHEN public_key IS NULL THEN :publicKey ELSE public_key END "
-                + "WHERE aid = 1")
+            "INSERT OR IGNORE INTO ext_hap_bridge (aid, aid_counter, config_num, protocol_version, state_num, status_flag, category_id, private_key, public_key) "
+                + "VALUES (1, 1, 1, '1.0', 1, 1, 2, :privateKey, :publicKey)")
             .bind("privateKey", privateKey)
             .bind("publicKey", publicKey)
             .execute()
     );
+
+    // Accessory (Bridge Accessory)
+    this.jdbi.useHandle(handle ->
+        handle.createUpdate(
+            "INSERT OR IGNORE INTO ext_hap_accessory (aid, iid_counter) VALUES (1, 7)")
+            .execute()
+    );
+
+    // Service (Bridge Accessory Information Service)
+    this.jdbi.useHandle(handle ->
+        handle.createUpdate(
+            "INSERT OR IGNORE INTO ext_hap_service (aid, sid, type) VALUES (1, 1, '0000003E-0000-1000-8000-0026BB765291')")
+            .execute()
+    );
+
+    // Characteristic
+    this.jdbi.useHandle(handle -> {
+      handle.createUpdate(  // Bridge Identify
+          "INSERT OR IGNORE INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format) "
+              + "VALUES (1, 2, 1, '00000014-0000-1000-8000-0026BB765291', null, 'pw', 'bool')")
+          .execute();
+      handle.createUpdate(  // Bridge Manufacturer
+          "INSERT OR IGNORE INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format) "
+              + "VALUES (1, 3, 1, '00000020-0000-1000-8000-0026BB765291', 'LongkerDandy', 'pr', 'string')")
+          .execute();
+      handle.createUpdate(  // Bridge Model
+          "INSERT OR IGNORE INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format, max_length) "
+              + "VALUES (1, 4, 1, '00000021-0000-1000-8000-0026BB765291', 'V.I.K.I Home Open Source Project', 'pr', 'string', 64)")
+          .execute();
+      handle.createUpdate(  // Bridge Name
+          "INSERT OR IGNORE INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format, max_length) "
+              + "VALUES (1, 5, 1, '00000023-0000-1000-8000-0026BB765291', 'V.I.K.I Home Bridge', 'pr', 'string', 64)")
+          .execute();
+      handle.createUpdate(  // Bridge Serial Number
+          "INSERT OR IGNORE INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format, max_length) "
+              + "VALUES (1, 6, 1, '00000030-0000-1000-8000-0026BB765291', '-L8ov6yMnBE0j3nyWnwm', 'pr', 'string', 64)")
+          .execute();
+      handle.createUpdate(  // Bridge Firmware Revision
+          "INSERT OR IGNORE INTO ext_hap_characteristic (aid, cid, sid, type, _value, permissions, format) "
+              + "VALUES (1, 7, 1, '00000052-0000-1000-8000-0026BB765291', '1.0.0', 'pr', 'string')")
+          .execute();
+    });
   }
 
   /**
    * Get bridge information
    *
-   * @return Map of Bridge Information
+   * @return {@link Bridge}
    */
-  public Map<String, ?> getBridgeInformation() {
+  public Bridge getBridgeInformation() {
     return this.jdbi.withHandle(handle ->
         handle.createQuery(
             "SELECT aid, config_num, protocol_version, state_num, status_flag, category_id, private_key, public_key FROM ext_hap_bridge WHERE aid = 1")
-            .map(bridgeInformationMapper)
-            .findOnly());
+            .mapTo(Bridge.class)
+            .first());
   }
 
   /**
@@ -98,7 +161,7 @@ public class HAPStorage {
       handle.execute("UPDATE ext_hap_bridge SET aid_counter = aid_counter + 1 WHERE aid = 1");
       return handle.createQuery("SELECT aid_counter FROM ext_hap_bridge WHERE aid = 1")
           .mapTo(Long.class)
-          .findOnly();
+          .first();
     });
   }
 
@@ -124,7 +187,7 @@ public class HAPStorage {
   public List<Accessory> getAccessories() {
     List<Accessory> accessories = this.jdbi.withHandle(handle ->
         handle.createQuery("SELECT * FROM ext_hap_accessory")
-            .map(accessoryMapper)
+            .mapTo(Accessory.class)
             .list());
     for (Accessory accessory : accessories) {
       List<Service> services = getServicesByAccessory(accessory.getInstanceId());
@@ -143,7 +206,7 @@ public class HAPStorage {
     List<Service> services = this.jdbi.withHandle(handle ->
         handle.createQuery("SELECT * FROM ext_hap_service WHERE aid = :aid")
             .bind("aid", accessoryId)
-            .map(serviceMapper)
+            .mapTo(Service.class)
             .list());
     for (Service service : services) {
       List<Characteristic> characteristics = getCharacteristicsByService(
@@ -165,7 +228,7 @@ public class HAPStorage {
         handle.createQuery("SELECT * FROM ext_hap_characteristic WHERE aid = :aid AND cid = :cid")
             .bind("aid", accessoryId)
             .bind("cid", instanceId)
-            .map(characteristicMapper)
+            .mapTo(Characteristic.class)
             .findFirst());
   }
 
@@ -181,7 +244,7 @@ public class HAPStorage {
         handle.createQuery("SELECT * FROM ext_hap_characteristic WHERE aid = :aid AND sid = :sid")
             .bind("aid", accessoryId)
             .bind("sid", serviceId)
-            .map(characteristicMapper)
+            .mapTo(Characteristic.class)
             .list());
   }
 
@@ -197,7 +260,7 @@ public class HAPStorage {
         handle.createQuery("SELECT * FROM ext_hap_characteristic WHERE aid = :aid AND type = :type")
             .bind("aid", accessoryId)
             .bind("type", type)
-            .map(characteristicMapper)
+            .mapTo(Characteristic.class)
             .findFirst());
   }
 
@@ -271,7 +334,7 @@ public class HAPStorage {
       Optional<Pairing> pairingInStorage = handle
           .createQuery("SELECT * FROM ext_hap_pairing WHERE pairing_id = :pairingId")
           .bind("pairingId", pairingId)
-          .map(pairingMapper)
+          .mapTo(Pairing.class)
           .findFirst();
       if (pairingInStorage.isPresent()) {
         if (!Arrays.equals(publicKey, pairingInStorage.get().getPublicKey())) {
@@ -305,7 +368,7 @@ public class HAPStorage {
     return this.jdbi.withHandle(handle ->
         handle.createQuery("SELECT * FROM ext_hap_pairing WHERE pairing_id = :pairingId")
             .bind("pairingId", pairingId)
-            .map(pairingMapper)
+            .mapTo(Pairing.class)
             .findFirst());
   }
 
@@ -317,7 +380,7 @@ public class HAPStorage {
   public List<Pairing> getPairings() {
     return this.jdbi.withHandle(handle ->
         handle.createQuery("SELECT * FROM ext_hap_pairing")
-            .map(pairingMapper)
+            .mapTo(Pairing.class)
             .list());
   }
 
@@ -343,10 +406,10 @@ public class HAPStorage {
       int count = handle
           .createQuery("SELECT count(*) FROM ext_hap_pairing WHERE permissions = 1")
           .mapTo(Integer.class)
-          .findOnly();
+          .first();
       if (count == 0) {
         List<Pairing> pairings = handle.createQuery("SELECT * FROM ext_hap_pairing")
-            .map(pairingMapper)
+            .mapTo(Pairing.class)
             .list();
         handle.createUpdate("DELETE from ext_hap_pairing")
             .execute();

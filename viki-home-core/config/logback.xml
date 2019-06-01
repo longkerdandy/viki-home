@@ -1,8 +1,14 @@
 <configuration>
 
   <appender class="ch.qos.logback.core.ConsoleAppender" name="Console">
+    <!-- On Windows machines setting withJansi to true enables ANSI
+         color code interpretation by the Jansi library. This requires
+         org.fusesource.jansi:jansi:1.8 on the class path.  Note that
+         Unix-based operating systems such as Linux and Mac OS X
+         support ANSI color codes by default. -->
+    <!-- <withJansi>true</withJansi> -->
     <encoder charset="UTF-8">
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %c{20} %M %L - %msg%n %ex{full}
+      <pattern>%green(%d{yyyy-MM-dd HH:mm:ss.SSS}) %magenta([%thread]) %highlight(%-5level) %cyan(%logger{15}) - %gray(%msg%n) %ex{full}
       </pattern>
     </encoder>
   </appender>
@@ -16,7 +22,8 @@
       <maxHistory>30</maxHistory>
     </rollingPolicy>
     <encoder charset="UTF-8">
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %c{20} %M %L - %msg%n %ex{full}</pattern>
+      <pattern>%green(%d{yyyy-MM-dd HH:mm:ss.SSS}) %magenta([%thread]) %highlight(%-5level) %cyan(%logger{15}) - %gray(%msg%n) %ex{full}
+      </pattern>
     </encoder>
   </appender>
 

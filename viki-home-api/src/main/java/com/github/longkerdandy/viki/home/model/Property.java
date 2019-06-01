@@ -12,7 +12,6 @@ import static com.github.longkerdandy.viki.home.model.DataType.STRING;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.github.longkerdandy.viki.home.json.PropertyDeserializer;
 import com.github.longkerdandy.viki.home.schema.PropertySchema;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -44,6 +43,7 @@ public class Property<T> {
   protected final String name;                    // developer friendly name
   protected final DataType type;                  // data type
   protected final T value;                        // value
+  protected final LocalDateTime updatedAt;        // timestamp
 
   /**
    * Constructor
@@ -51,14 +51,15 @@ public class Property<T> {
    * @param name developer friendly name
    * @param type {@link DataType}
    * @param value value
+   * @param updatedAt timestamp
    */
   @JsonCreator
-  public Property(@JsonProperty("name") String name,
-      @JsonProperty("type") DataType type,
-      @JsonProperty("value") T value) {
+  public Property(@JsonProperty("name") String name, @JsonProperty("type") DataType type,
+      @JsonProperty("value") T value, @JsonProperty("updatedAt") LocalDateTime updatedAt) {
     this.name = name;
     this.type = type;
     this.value = value;
+    this.updatedAt = updatedAt;
   }
 
   public String getName() {
@@ -73,12 +74,17 @@ public class Property<T> {
     return value;
   }
 
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
   @Override
   public String toString() {
     return "Property{" +
         "name='" + name + '\'' +
         ", type=" + type +
         ", value=" + value +
+        ", updatedAt=" + updatedAt +
         '}';
   }
 
@@ -102,8 +108,8 @@ public class Property<T> {
       return false;
     }
 
-    if (value == null) {
-      return !propertySchema.isRequired();
+    if (updatedAt == null) {
+      return false;
     }
 
     if (propertySchema.getConstant() != null && (type == INTEGER || type == NUMBER || type == STRING
@@ -275,16 +281,6 @@ public class Property<T> {
         if (propertySchema.getMaxLength() != null
             && ((byte[]) value).length > propertySchema.getMaxLength()) {
           return false;
-        }
-        break;
-      case OBJECT:
-        if (propertySchema.getProperties() == null) {
-          return false;
-        }
-        for (Property p : (Property[]) value) {
-          if (!p.validate((PropertySchema) propertySchema.getProperties().get(p.name))) {
-            return false;
-          }
         }
         break;
     }

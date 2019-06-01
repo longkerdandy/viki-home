@@ -20,6 +20,10 @@
       <artifactId>viki-home-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jmdns</groupId>
       <artifactId>jmdns</artifactId>
     </dependency>
@@ -60,11 +64,6 @@
       <artifactId>httpcore</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.github.longkerdandy</groupId>
-      <artifactId>viki-home-storage</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>

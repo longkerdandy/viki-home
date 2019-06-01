@@ -2,8 +2,11 @@ package com.github.longkerdandy.viki.home.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.longkerdandy.viki.home.schema.PropertySchema;
 import com.github.longkerdandy.viki.home.schema.ThingSchema;
-import java.util.Arrays;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -12,35 +15,26 @@ import org.apache.commons.lang3.StringUtils;
 public class Thing {
 
   protected final String id;                                // thing identifier
-  protected final String schema;                            // schema identifier
-  protected final String name;                              // developer friendly name
-  protected final Property[] properties;                    // properties
-  protected final Action[] actions;                         // actions
-  protected final Event[] events;                           // events
+  protected final String schema;                            // schema name
+  protected final List<Property> properties;                // properties
+  protected final LocalDateTime heartbeat;                  // timestamp
 
   /**
    * Constructor
    *
    * @param id thing identifier
-   * @param schema schema identifier
-   * @param name developer friendly name
+   * @param schema schema name
    * @param properties properties
-   * @param actions actions
-   * @param events events
+   * @param heartbeat timestamp
    */
   @JsonCreator
-  public Thing(@JsonProperty("id") String id,
-      @JsonProperty("schema") String schema,
-      @JsonProperty("name") String name,
-      @JsonProperty("properties") Property[] properties,
-      @JsonProperty("actions") Action[] actions,
-      @JsonProperty("events") Event[] events) {
+  public Thing(@JsonProperty("id") String id, @JsonProperty("schema") String schema,
+      @JsonProperty("properties") List<Property> properties,
+      @JsonProperty("heartbeat") LocalDateTime heartbeat) {
     this.id = id;
     this.schema = schema;
-    this.name = name;
     this.properties = properties;
-    this.actions = actions;
-    this.events = events;
+    this.heartbeat = heartbeat;
   }
 
   public String getId() {
@@ -51,20 +45,12 @@ public class Thing {
     return schema;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public Property[] getProperties() {
+  public List<Property> getProperties() {
     return properties;
   }
 
-  public Action[] getActions() {
-    return actions;
-  }
-
-  public Event[] getEvents() {
-    return events;
+  public LocalDateTime getHeartbeat() {
+    return heartbeat;
   }
 
   @Override
@@ -72,10 +58,7 @@ public class Thing {
     return "Thing{" +
         "id='" + id + '\'' +
         ", schema='" + schema + '\'' +
-        ", name='" + name + '\'' +
-        ", properties=" + Arrays.toString(properties) +
-        ", actions=" + Arrays.toString(actions) +
-        ", events=" + Arrays.toString(events) +
+        ", properties=" + properties +
         '}';
   }
 
@@ -94,33 +77,18 @@ public class Thing {
       return false;
     }
 
-    if (StringUtils.isEmpty(this.schema) || !this.schema.equals(thingSchema.getId())) {
+    if (StringUtils.isEmpty(this.schema) || !this.schema.equals(thingSchema.getName())) {
       return false;
     }
 
-    if (StringUtils.isEmpty(name)) {
+    if (heartbeat == null) {
       return false;
     }
 
     if (properties != null) {
       for (Property property : properties) {
-        if (!property.validate(thingSchema.getProperties().get(property.getName()))) {
-          return false;
-        }
-      }
-    }
-
-    if (actions != null) {
-      for (Action action : actions) {
-        if (!action.validate(thingSchema.getActions().get(action.getName()))) {
-          return false;
-        }
-      }
-    }
-
-    if (events != null) {
-      for (Event event : events) {
-        if (event.validate(thingSchema.getEvents().get(event.getName()))) {
+        Optional<PropertySchema> propertySchema = thingSchema.getPropertyByName(property.getName());
+        if (propertySchema.isEmpty() || !property.validate(propertySchema.get())) {
           return false;
         }
       }

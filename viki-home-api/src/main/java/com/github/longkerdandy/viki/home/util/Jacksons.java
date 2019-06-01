@@ -6,11 +6,13 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.IOException;
 
 /**
  * Jackson (JSON) Util
@@ -54,6 +56,113 @@ public class Jacksons {
    */
   public static ObjectReader getReader(TypeReference<?> type) {
     return SingletonHelper.MAPPER.readerFor(type);
+  }
+
+  /**
+   * Check the String field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return String value of the field
+   * @throws IOException if field is missing or null
+   */
+  public static String checkString(JsonNode node, String fieldName) throws IOException {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      throw new IOException("JsonNode missing " + fieldName + " field");
+    }
+    return subNode.asText();
+  }
+
+  /**
+   * Check the Integer field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return Integer value of the field
+   * @throws IOException if field is missing or null
+   */
+  public static int checkInteger(JsonNode node, String fieldName) throws IOException {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      throw new IOException("JsonNode missing " + fieldName + " field");
+    }
+    return subNode.asInt();
+  }
+
+  /**
+   * Get the Boolean field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return Boolean value of the field or null
+   */
+  public static Boolean getBoolean(JsonNode node, String fieldName) {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      return null;
+    }
+    return subNode.asBoolean();
+  }
+
+  /**
+   * Get the String field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return String value of the field or null
+   */
+  public static String getString(JsonNode node, String fieldName) {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      return null;
+    }
+    return subNode.asText();
+  }
+
+  /**
+   * Get the Integer field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return Integer value of the field or null
+   */
+  public static Integer getInteger(JsonNode node, String fieldName) {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      return null;
+    }
+    return subNode.asInt();
+  }
+
+  /**
+   * Get the Long field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return Long value of the field or null
+   */
+  public static Long getLong(JsonNode node, String fieldName) {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      return null;
+    }
+    return subNode.asLong();
+  }
+
+  /**
+   * Get the Double field from {@link JsonNode}
+   *
+   * @param node {@link JsonNode}
+   * @param fieldName Field Name
+   * @return Double value of the field or null
+   */
+  public static Double getDouble(JsonNode node, String fieldName) {
+    JsonNode subNode = node.path(fieldName);
+    if (subNode.isNull() || subNode.isMissingNode()) {
+      return null;
+    }
+    return subNode.asDouble();
   }
 
   /**

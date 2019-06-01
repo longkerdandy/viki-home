@@ -1,25 +1,21 @@
 package com.github.longkerdandy.viki.home.hap.mdns;
 
+import com.github.longkerdandy.viki.home.hap.model.Bridge;
 import com.github.longkerdandy.viki.home.hap.model.Characteristic;
 import com.github.longkerdandy.viki.home.hap.storage.HAPStorage;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * mDNS advertiser for HomeKit Accessory Protocol Bridge
  */
 public class HAPmDNSAdvertiser {
-
-  private static final Logger logger = LoggerFactory.getLogger(HAPmDNSAdvertiser.class);
 
   // mac address
   private final String macAddress;
@@ -106,7 +102,7 @@ public class HAPmDNSAdvertiser {
    */
   protected HashMap<String, String> getBridgeProperties() {
     // Get bridge information from storage
-    Map<String, ?> info = this.hapStorage.getBridgeInformation();
+    Bridge bridge = this.hapStorage.getBridgeInformation();
 
     // Current configuration number. Required.
     // Must update when an accessory, service, or characteristic is added or removed on the accessory
@@ -114,7 +110,7 @@ public class HAPmDNSAdvertiser {
     // Accessories must increment the config number after a firmware update.
     // This must have a range of 1-4294967295 and wrap to 1 when it overflows. (down to 2147483647)
     // This value must persist across reboots, power cycles, etc.
-    int configNum = (Integer) info.get("config_num");
+    int configNum = bridge.getConfigNum();
 
     // Feature flags (e.g. "0x3" for bits 0 and 1). Required if non-zero.
     int featureFlag = 0;
@@ -127,18 +123,18 @@ public class HAPmDNSAdvertiser {
     }
 
     // Protocol version string <major>.<minor> (e.g. "1.0"). Required if value is not "1.0".
-    String protocolVersion = (String) info.get("protocol_version");
+    String protocolVersion = bridge.getProtocolVersion();
 
     // Current state number. Required.
-    int stateNum = (Integer) info.get("state_num");
+    int stateNum = bridge.getStateNum();
 
     // Status flags (e.g. "0x04" for bit 3). Value should be an unsigned integer. Required.
-    int statusFlag = (Integer) info.get("status_flag");
+    int statusFlag = bridge.getStatusFlag();
 
     // Accessory Category Identifier. Required. Indicates the category that best describes the primary
     // function of the accessory. This must have a range of 1-65535.
     // This must persist across reboots, power cycles, etc.
-    int categoryId = (Integer) info.get("category_id");
+    int categoryId = bridge.getCategoryId();
 
     HashMap<String, String> props = new HashMap<>();
     props.put("c#", String.valueOf(configNum));

@@ -1,6 +1,10 @@
 package com.github.longkerdandy.viki.home.schema;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -8,83 +12,103 @@ import java.util.ResourceBundle;
  */
 public class ThingSchema {
 
-  protected final String id;                                // schema identifier
-  protected final String name;                              // developer friendly name
-  protected final ResourceBundle resources;                 // localized label and description
-  protected final Map<String, PropertySchema> properties;   // properties
-  protected final Map<String, ActionSchema> actions;        // actions
-  protected final Map<String, EventSchema> events;          // events
+  protected final String name;                              // schema name
+  protected final Map<String, String> functions;            // functions
+  protected final List<PropertySchema> properties;          // property schemas
+  protected final List<ActionSchema> actions;               // action schemas
+  protected final List<EventSchema> events;                 // event schemas
+
+  protected ResourceBundle resources;                       // i18n resources
 
   /**
    * Constructor
    *
-   * @param id schema identifier
-   * @param name developer friendly name
-   * @param resources {@link ResourceBundle}
-   * @param properties properties
-   * @param actions actions
-   * @param events events
+   * @param name schema name
+   * @param properties property schemas
+   * @param actions action schemas
+   * @param events event schemas
    */
-  public ThingSchema(String id, String name, ResourceBundle resources,
-      Map<String, PropertySchema> properties,
-      Map<String, ActionSchema> actions,
-      Map<String, EventSchema> events) {
-    this.id = id;
+  @JsonCreator
+  public ThingSchema(@JsonProperty("name") String name,
+      @JsonProperty("functions") Map<String, String> functions,
+      @JsonProperty("properties") List<PropertySchema> properties,
+      @JsonProperty("actions") List<ActionSchema> actions,
+      @JsonProperty("events") List<EventSchema> events) {
     this.name = name;
-    this.resources = resources;
+    this.functions = functions;
     this.properties = properties;
     this.actions = actions;
     this.events = events;
-  }
-
-  /**
-   * Get localized label
-   *
-   * @return label
-   */
-  public String getLabel() {
-    return resources.getString(name + ".label");
-  }
-
-  /**
-   * Get localized description
-   *
-   * @return description
-   */
-  public String getDescription() {
-    return resources.getString(name + ".description");
-  }
-
-  public String getId() {
-    return id;
   }
 
   public String getName() {
     return name;
   }
 
-  public Map<String, PropertySchema> getProperties() {
+  public Map<String, String> getFunctions() {
+    return functions;
+  }
+
+  public List<PropertySchema> getProperties() {
     return properties;
   }
 
-  public Map<String, ActionSchema> getActions() {
+  public List<ActionSchema> getActions() {
     return actions;
   }
 
-  public Map<String, EventSchema> getEvents() {
+  public List<EventSchema> getEvents() {
     return events;
+  }
+
+  public ResourceBundle getResources() {
+    return resources;
+  }
+
+  public ThingSchema resourceBundle(ResourceBundle resources) {
+    this.resources = resources;
+    return this;
+  }
+
+  /**
+   * Get {@link PropertySchema} based on its name
+   *
+   * @param name schema name
+   * @return Optional {@link PropertySchema}
+   */
+  public Optional<PropertySchema> getPropertyByName(String name) {
+    return this.properties.stream().filter(p -> p.getName().equals(name)).findFirst();
+  }
+
+  /**
+   * Get {@link ActionSchema} based on its name
+   *
+   * @param name schema name
+   * @return Optional {@link ActionSchema}
+   */
+  public Optional<ActionSchema> getActionByName(String name) {
+    return this.actions.stream().filter(a -> a.getName().equals(name)).findFirst();
+  }
+
+  /**
+   * Get {@link EventSchema} based on its name
+   *
+   * @param name schema name
+   * @return Optional {@link EventSchema}
+   */
+  public Optional<EventSchema> getEventByName(String name) {
+    return this.events.stream().filter(e -> e.getName().equals(name)).findFirst();
   }
 
   @Override
   public String toString() {
     return "ThingSchema{" +
-        "id='" + id + '\'' +
-        ", name='" + name + '\'' +
-        ", label='" + getLabel() + '\'' +
-        ", description='" + getDescription() + '\'' +
+        "name='" + name + '\'' +
+        ", functions=" + functions +
         ", properties=" + properties +
         ", actions=" + actions +
         ", events=" + events +
+        ", resources=" + resources +
         '}';
   }
 }

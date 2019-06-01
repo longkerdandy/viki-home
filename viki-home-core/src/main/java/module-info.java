@@ -6,6 +6,6 @@ module com.github.longkerdandy.viki.home.core {
   requires org.flywaydb.core;
 
   // services
-  uses com.github.longkerdandy.viki.home.storage.StorageFactory;
-  uses com.github.longkerdandy.viki.home.addon.ProtocolAddOnFactory;
+  uses com.github.longkerdandy.viki.home.ext.SmartThingExtFactory;
+  uses com.github.longkerdandy.viki.home.ext.ControllerExtFactory;
 }
